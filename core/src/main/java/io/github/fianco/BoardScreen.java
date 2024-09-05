@@ -2,7 +2,6 @@ package io.github.fianco;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -25,7 +24,11 @@ public class BoardScreen extends InputAdapter implements Screen {
     private final int gridSize = 9;  // 9x9 grid
     private final int cellSize = 60; // Size of each cell in pixels
     private boolean[][] cellClicked; // Tracks clicked cells
+    private int[][] board; // Tracks where stones are placed (0 = empty, 1 = white, 2 = black)
 
+    private int selectedRow = -1; // Track the selected stone's row
+    private int selectedCol = -1; // Track the selected stone's column
+    private boolean isBlackTurn = false; // Track whose turn it is (alternating between white and black stones)
 
     public BoardScreen(Main game) {
         this.game = game;
@@ -35,6 +38,7 @@ public class BoardScreen extends InputAdapter implements Screen {
         shapeRenderer = new ShapeRenderer();
 
         cellClicked = new boolean[gridSize][gridSize]; // Initialize cell click tracking
+        board = new int[gridSize][gridSize]; // Initialize the board
 
         font = new BitmapFont(); // Default LibGDX font
         layout = new GlyphLayout(); // Used to position text
@@ -43,9 +47,25 @@ public class BoardScreen extends InputAdapter implements Screen {
         blackStoneTexture = new Texture(Gdx.files.internal("black_stone.png"));
         whiteStoneTexture = new Texture(Gdx.files.internal("white_stone.png"));
 
+        // Set initial positions for the stones
+        setInitialStonePositions();
 
         // Set this screen as the input processor to capture clicks
         Gdx.input.setInputProcessor(this);
+    }
+
+    private void setInitialStonePositions() {
+        // Set white stones in the first row
+        for (int col = 0; col < gridSize; col++) {
+            board[0][col] = 1; // 1 = white stone
+        }
+        board[1][1]=1;board[1][7]=1;board[2][2]=1;board[2][6]=1;board[3][3]=1;board[3][5]=1;
+
+        // Set black stones in the last row
+        for (int col = 0; col < gridSize; col++) {
+            board[8][col] = 2; // 2 = black stone
+        }
+        board[7][1]=2;board[7][7]=2;board[6][2]=2;board[6][6]=2;board[5][3]=2;board[5][5]=2;
     }
 
     @Override
@@ -58,18 +78,6 @@ public class BoardScreen extends InputAdapter implements Screen {
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Draw the cells, highlight clicked ones
-        for (int row = 0; row < gridSize; row++) {
-            for (int col = 0; col < gridSize; col++) {
-                if (cellClicked[row][col]) {
-                    shapeRenderer.setColor(Color.BLUE); // Highlight clicked cells (blue)
-                } else {
-                    shapeRenderer.setColor(Color.GRAY); // Default cell color (white)
-                }
-                shapeRenderer.rect(col * cellSize, row * cellSize, cellSize, cellSize);
-            }
-        }
 
         shapeRenderer.end();
 
@@ -91,11 +99,47 @@ public class BoardScreen extends InputAdapter implements Screen {
         int col = (int) (worldCoordinates.x / cellSize);
         int row = (int) (worldCoordinates.y / cellSize);
 
-        if (row >= 0 && row < gridSize && col >= 0 && col < gridSize) {
-            cellClicked[row][col] = !cellClicked[row][col]; // Toggle cell click state
+        if ( (row >= 0 && row < gridSize && col >= 0 && col < gridSize)) {
+            if (selectedRow == -1 && selectedCol == -1) {
+                // Select a stone depending on the player turn
+                if (board[row][col] == 1 && !isBlackTurn) {
+                    selectedRow = row;
+                    selectedCol = col;
+                } else if (board[row][col] == 2 && isBlackTurn) {
+                    selectedRow = row;
+                    selectedCol = col;
+                }
+            } else {
+                // Attempt to move the stone if a stone is already selected
+                moveStone(row, col);
+            }
         }
+        System.out.println("This is selected row " + selectedRow);
+        System.out.println("This is  row " + row);
 
         return true; // Return true to indicate the event was handled
+    }
+
+    private void moveStone(int row, int col) {
+        // Check if the move is valid (forward, left, right, and only by one cell)
+        if(board[row][col] == 0){
+            System.out.println("helooo");
+            if ( ((!isBlackTurn) && (row - selectedRow == 1 && col == selectedCol)) || ((isBlackTurn) && (selectedRow - row == 1 && col == selectedCol)) || // Forward
+                (Math.abs(col - selectedCol) == 1 && row == selectedRow) ) {  // Left or right
+
+                // Move the stone
+                board[row][col] = board[selectedRow][selectedCol];
+                board[selectedRow][selectedCol] = 0;
+
+                // Reset the selection
+                selectedRow = -1;
+                selectedCol = -1;
+
+                // Change turns
+                isBlackTurn = !isBlackTurn;
+
+            }
+        }
     }
 
     public void makeGrid(){
@@ -123,11 +167,11 @@ public class BoardScreen extends InputAdapter implements Screen {
 
                 font.draw(game.mainBatch, notation, x, y);
 
-                // Draw stones
-                if (row == 8 || (row == 7 && ( col == 1 || col == 7 )) || (row == 6 && ( col == 2 || col == 6 )) || (row == 5 && ( col == 3 || col == 5 )) ) { // 9th row (index 8) for black stones
-                    game.mainBatch.draw(blackStoneTexture, col * cellSize, row * cellSize, cellSize, cellSize);
-                } else if (row == 0 || (row == 1 && ( col == 1 || col == 7 )) || (row == 2 && ( col == 2 || col == 6 )) || (row == 3 && ( col == 3 || col == 5 )) ) { // 1st row (index 0) for white stones
+                // Draw stones based on the board state
+                if (board[row][col] == 1) { // White stone
                     game.mainBatch.draw(whiteStoneTexture, col * cellSize, row * cellSize, cellSize, cellSize);
+                } else if (board[row][col] == 2) { // Black stone
+                    game.mainBatch.draw(blackStoneTexture, col * cellSize, row * cellSize, cellSize, cellSize);
                 }
             }
         }
