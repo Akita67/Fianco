@@ -13,7 +13,8 @@ import com.badlogic.gdx.InputAdapter;
 
 public class BoardScreen extends InputAdapter implements Screen {
 
-    private Main game;
+    private final Main game;
+    private GameLogic gameLogic;
     private OrthographicCamera camera;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
@@ -29,9 +30,11 @@ public class BoardScreen extends InputAdapter implements Screen {
     private int selectedRow = -1; // Track the selected stone's row
     private int selectedCol = -1; // Track the selected stone's column
     private boolean isBlackTurn = false; // Track whose turn it is (alternating between white and black stones)
+    private boolean reset = false;
 
     public BoardScreen(Main game) {
         this.game = game;
+        gameLogic = new GameLogic(game);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 1000, 600); // Set your camera dimensions
@@ -54,7 +57,7 @@ public class BoardScreen extends InputAdapter implements Screen {
         Gdx.input.setInputProcessor(this);
     }
 
-    private void setInitialStonePositions() {
+    protected void setInitialStonePositions() {
         // Set white stones in the first row
         for (int col = 0; col < gridSize; col++) {
             board[0][col] = 1; // 1 = white stone
@@ -84,6 +87,9 @@ public class BoardScreen extends InputAdapter implements Screen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
         makeGrid();
+        reset = gameLogic.winCondition(board, game.mainBatch);
+        if(reset)
+            resetGrid();
     }
 
     private String getChessNotation(int row, int col) {
@@ -95,12 +101,13 @@ public class BoardScreen extends InputAdapter implements Screen {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
+        boolean flag = false;
 
         int col = (int) (worldCoordinates.x / cellSize);
         int row = (int) (worldCoordinates.y / cellSize);
 
         if ( (row >= 0 && row < gridSize && col >= 0 && col < gridSize)) {
-            if (selectedRow == -1 && selectedCol == -1) {
+            if (selectedRow == -1 && selectedCol == -1 || board[row][col] != 0) {
                 // Select a stone depending on the player turn
                 if (board[row][col] == 1 && !isBlackTurn) {
                     selectedRow = row;
@@ -123,7 +130,6 @@ public class BoardScreen extends InputAdapter implements Screen {
     private void moveStone(int row, int col) {
         // Check if the move is valid (forward, left, right, and only by one cell)
         if(board[row][col] == 0){
-            System.out.println("helooo");
             if ( ((!isBlackTurn) && (row - selectedRow == 1 && col == selectedCol)) || ((isBlackTurn) && (selectedRow - row == 1 && col == selectedCol)) || // Forward
                 (Math.abs(col - selectedCol) == 1 && row == selectedRow) ) {  // Left or right
 
@@ -176,6 +182,11 @@ public class BoardScreen extends InputAdapter implements Screen {
             }
         }
         game.mainBatch.end();
+    }
+    public void resetGrid(){
+        board = new int[gridSize][gridSize]; // Initialize the board
+        setInitialStonePositions();
+        isBlackTurn=false;
     }
 
     @Override
