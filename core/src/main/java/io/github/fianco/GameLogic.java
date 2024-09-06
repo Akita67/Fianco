@@ -25,7 +25,7 @@ public class GameLogic {
         layout = new GlyphLayout(); // Initialize layout to center text
     }
 
-    public boolean winCondition(int[][] board, SpriteBatch batch){
+    public void winCondition(BoardScreen boardScreen, int[][] board, SpriteBatch batch){
         this.board = board;
 
         // Check if a black stone has reached row 0 (top)
@@ -45,16 +45,24 @@ public class GameLogic {
         }
 
         // Render win message if a player has won
+
         if (blackWins) {
-            renderWinMessage(batch, "Black Wins!");
+            if(boardScreen.isPlayer1White)
+                boardScreen.addPlayer2Score();
+            else
+                boardScreen.addPlayer1Score();
             resetBoard();
-            return true;
+            boardScreen.resetGrid();
+            boardScreen.changePlayer1Side();
         } else if (whiteWins) {
-            renderWinMessage(batch, "White Wins!");
+            if(boardScreen.isPlayer1White)
+                boardScreen.addPlayer1Score();
+            else
+                boardScreen.addPlayer2Score();
             resetBoard();
-            return true;
+            boardScreen.resetGrid();
+            boardScreen.changePlayer1Side();
         }
-        return false;
     }
 
     private void renderWinMessage(SpriteBatch batch, String message) {
@@ -76,5 +84,13 @@ public class GameLogic {
         // Reset the win conditions
         blackWins = false;
         whiteWins = false;
+    }
+    public void finished(int num1, int num2){
+        if(num1>=2){
+            game.setScreen(new CongratulationsScreen("Congratulations! Player 1 won the game!"));
+        }
+        else if(num2>=2){
+            game.setScreen(new CongratulationsScreen("Congratulations! Player 2 won the game!"));
+        }
     }
 }

@@ -2,6 +2,7 @@ package io.github.fianco;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -31,6 +32,9 @@ public class BoardScreen extends InputAdapter implements Screen {
     private int selectedCol = -1; // Track the selected stone's column
     private boolean isBlackTurn = false; // Track whose turn it is (alternating between white and black stones)
     private boolean reset = false;
+    protected int numWinPlayer1 = 0;
+    protected int numWinPlayer2 = 0;
+    protected boolean isPlayer1White = true;
 
     public BoardScreen(Main game) {
         this.game = game;
@@ -87,9 +91,11 @@ public class BoardScreen extends InputAdapter implements Screen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
         makeGrid();
-        reset = gameLogic.winCondition(board, game.mainBatch);
-        if(reset)
-            resetGrid();
+        updateScore();
+
+        gameLogic.winCondition(this, board, game.mainBatch);
+        gameLogic.finished(numWinPlayer1,numWinPlayer2);
+
     }
 
     private String getChessNotation(int row, int col) {
@@ -101,7 +107,6 @@ public class BoardScreen extends InputAdapter implements Screen {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
-        boolean flag = false;
 
         int col = (int) (worldCoordinates.x / cellSize);
         int row = (int) (worldCoordinates.y / cellSize);
@@ -121,9 +126,6 @@ public class BoardScreen extends InputAdapter implements Screen {
                 moveStone(row, col);
             }
         }
-        System.out.println("This is selected row " + selectedRow);
-        System.out.println("This is  row " + row);
-
         return true; // Return true to indicate the event was handled
     }
 
@@ -187,6 +189,30 @@ public class BoardScreen extends InputAdapter implements Screen {
         board = new int[gridSize][gridSize]; // Initialize the board
         setInitialStonePositions();
         isBlackTurn=false;
+    }
+    public void updateScore(){
+        game.mainBatch.begin();
+        font.setColor(Color.BLACK);
+        if(isPlayer1White)
+            font.draw(game.mainBatch, "Player 1 is White",250,600);
+        else{
+            font.draw(game.mainBatch, "Player 1 is Black",250,600);
+        }
+
+        font.draw(game.mainBatch, "Score of player 1 :",550,500);
+        font.draw(game.mainBatch, new String(String.valueOf(numWinPlayer1)),680,500);
+        font.draw(game.mainBatch, "Score of player 2 :",550,450);
+        font.draw(game.mainBatch, new String(String.valueOf(numWinPlayer2)),680,450);
+        game.mainBatch.end();
+    }
+    public void addPlayer1Score(){
+        numWinPlayer1++;
+    }
+    public void addPlayer2Score(){
+        numWinPlayer2++;
+    }
+    public void changePlayer1Side(){
+        isPlayer1White = !isPlayer1White;
     }
 
     @Override
