@@ -12,6 +12,9 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.InputAdapter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BoardScreen extends InputAdapter implements Screen {
 
     private final Main game;
@@ -35,6 +38,8 @@ public class BoardScreen extends InputAdapter implements Screen {
     protected int numWinPlayer1 = 0;
     protected int numWinPlayer2 = 0;
     protected boolean isPlayer1White = true;
+    List<List<Integer>> possibleMoves = new ArrayList<>();
+    private boolean flag = false;
 
     public BoardScreen(Main game) {
         this.game = game;
@@ -123,8 +128,21 @@ public class BoardScreen extends InputAdapter implements Screen {
                 }
             } else {
                 // Attempt to move the stone if a stone is already selected
-                moveStone(row, col);
+                System.out.println("hola");
+                if(flag){
+                    System.out.println("Need to attack");
+                    flag = AttackStone(row,col);
+                    System.out.println(flag);
+                }else{
+                    moveStone(row, col);
+                }
             }
+        }
+        if(checkForCaptures(board, !isBlackTurn)){
+            System.out.println("I can attack");
+            flag = true;
+        }else{
+            System.out.println("nobody can attack");
         }
         return true; // Return true to indicate the event was handled
     }
@@ -148,6 +166,86 @@ public class BoardScreen extends InputAdapter implements Screen {
 
             }
         }
+    }
+    private boolean checkForCaptures(int [][]board, boolean player1) {
+        //When a player is on the wall the other player needs to attack is a bug
+
+        int playerStone = player1 ? 1 : 2; // 1 for white, 2 for black
+        int opponentStone = player1 ? 2 : 1; // Opponent's stone
+        List<Integer> move = new ArrayList<>();
+
+        // Loop through the board to check for capture possibilities
+        for (int row = 0; row < board.length; row++) {
+            for (int col = 0; col < board[row].length; col++) {
+                if (board[row][col] == playerStone) {
+                    // Check diagonally left and right for opponent stones
+
+                    // Check diagonally left
+                    if (col>1 && row < 7 && board[row + 1][col - 1] == opponentStone) {
+                        // Check if there's an empty space behind the opponent (for white moving up)
+                        if (board[row + 2][col - 2] == 0) {
+                            move.add(row);move.add(col);move.add(row+1);move.add(col-1);move.add(row+2);move.add(col-2);possibleMoves.add(move);move=new ArrayList<>();
+                        }
+                    }
+
+                    // Check diagonally right
+                    if (col < board[row].length - 2 && row < 7 && board[row + 1][col + 1] == opponentStone) {
+                        // Check if there's an empty space behind the opponent (for white moving up)
+                        if (board[row + 2][col + 2] == 0) {
+                            move.add(row);move.add(col);move.add(row+1);move.add(col+1);move.add(row+2);move.add(col+2);possibleMoves.add(move);move=new ArrayList<>();
+                        }
+                    }
+
+                    // Similar logic for black moving down (opposite direction)
+                    if (playerStone == 2) { // Black moves downwards
+                        // Check diagonally left
+                        if (col > 1 && row > 1 && board[row - 1][col - 1] == opponentStone) {
+                            // Check if there's an empty space behind the opponent (for black moving down)
+                            if (board[row - 2][col - 2] == 0) {
+                                move.add(row);move.add(col);move.add(row-1);move.add(col-1);move.add(row-2);move.add(col-2);possibleMoves.add(move);move=new ArrayList<>();
+                            }
+                        }
+
+                        // Check diagonally right
+                        if (col < board[row].length - 2 && row > 1 && board[row - 1][col + 1] == opponentStone) {
+                            // Check if there's an empty space behind the opponent (for black moving down)
+                            if (board[row - 2][col + 2] == 0) {
+                                move.add(row);move.add(col);move.add(row-1);move.add(col+1);move.add(row-2);move.add(col+2);possibleMoves.add(move);move=new ArrayList<>();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(possibleMoves.size()>0)
+            return true;
+
+        // If no attack is possible, allow the move
+        return false;
+
+    }
+    // Capture the opponent's stone
+    private boolean AttackStone(int row, int col){
+        for (List<Integer> move: possibleMoves) {
+            if(selectedRow==move.get(0) && selectedCol==move.get(1)){
+                if(row==move.get(4) && col==move.get(5)){
+                    // Move the stone
+                    board[row][col] = board[selectedRow][selectedCol];
+                    board[selectedRow][selectedCol] = 0;
+                    board[move.get(2)][move.get(3)] = 0;
+
+                    // Reset the selection
+                    selectedRow = -1;
+                    selectedCol = -1;
+
+                    // Change turns
+                    isBlackTurn = !isBlackTurn;
+                    movesToNull();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public void makeGrid(){
@@ -189,6 +287,9 @@ public class BoardScreen extends InputAdapter implements Screen {
         board = new int[gridSize][gridSize]; // Initialize the board
         setInitialStonePositions();
         isBlackTurn=false;
+    }
+    public void movesToNull(){
+        possibleMoves = new ArrayList<>();
     }
     public void updateScore(){
         game.mainBatch.begin();
