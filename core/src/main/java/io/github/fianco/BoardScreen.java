@@ -18,13 +18,13 @@ import java.util.List;
 public class BoardScreen extends InputAdapter implements Screen {
 
     private final Main game;
-    private GameLogic gameLogic;
-    private OrthographicCamera camera;
-    private ShapeRenderer shapeRenderer;
-    private BitmapFont font;
-    private GlyphLayout layout;
-    private Texture blackStoneTexture;
-    private Texture whiteStoneTexture;
+    private final GameLogic gameLogic;
+    private final OrthographicCamera camera;
+    private final ShapeRenderer shapeRenderer;
+    private final BitmapFont font;
+    private final GlyphLayout layout;
+    private final Texture blackStoneTexture;
+    private final Texture whiteStoneTexture;
 
     private final int gridSize = 9;  // 9x9 grid
     private final int cellSize = 60; // Size of each cell in pixels
@@ -141,6 +141,7 @@ public class BoardScreen extends InputAdapter implements Screen {
         if(checkForCaptures(board, !isBlackTurn)){
             System.out.println("I can attack");
             flag = true;
+
         }else{
             System.out.println("nobody can attack");
         }
@@ -181,20 +182,23 @@ public class BoardScreen extends InputAdapter implements Screen {
                     // Check diagonally left and right for opponent stones
 
                     // Check diagonally left
-                    if (col>1 && row < 7 && board[row + 1][col - 1] == opponentStone) {
-                        // Check if there's an empty space behind the opponent (for white moving up)
-                        if (board[row + 2][col - 2] == 0) {
-                            move.add(row);move.add(col);move.add(row+1);move.add(col-1);move.add(row+2);move.add(col-2);possibleMoves.add(move);move=new ArrayList<>();
+                    if (playerStone == 1) { // White moves upwards
+                        // Check diagonally left
+                        if (col>1 && row < 7 && board[row + 1][col - 1] == opponentStone) {
+                            // Check if there's an empty space behind the opponent (for white moving up)
+                            if (board[row + 2][col - 2] == 0) {
+                                move.add(row);move.add(col);move.add(row+1);move.add(col-1);move.add(row+2);move.add(col-2);possibleMoves.add(move);move=new ArrayList<>();
+                            }
+                        }
+                        // Check diagonally right
+                        if (col < board[row].length - 2 && row < 7 && board[row + 1][col + 1] == opponentStone) {
+                            // Check if there's an empty space behind the opponent (for white moving up)
+                            if (board[row + 2][col + 2] == 0) {
+                                move.add(row);move.add(col);move.add(row+1);move.add(col+1);move.add(row+2);move.add(col+2);possibleMoves.add(move);move=new ArrayList<>();
+                            }
                         }
                     }
 
-                    // Check diagonally right
-                    if (col < board[row].length - 2 && row < 7 && board[row + 1][col + 1] == opponentStone) {
-                        // Check if there's an empty space behind the opponent (for white moving up)
-                        if (board[row + 2][col + 2] == 0) {
-                            move.add(row);move.add(col);move.add(row+1);move.add(col+1);move.add(row+2);move.add(col+2);possibleMoves.add(move);move=new ArrayList<>();
-                        }
-                    }
 
                     // Similar logic for black moving down (opposite direction)
                     if (playerStone == 2) { // Black moves downwards
@@ -207,7 +211,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                         }
 
                         // Check diagonally right
-                        if (col < board[row].length - 2 && row > 1 && board[row - 1][col + 1] == opponentStone) {
+                        if (col < board[col].length - 2 && row > 1 && board[row - 1][col + 1] == opponentStone) {
                             // Check if there's an empty space behind the opponent (for black moving down)
                             if (board[row - 2][col + 2] == 0) {
                                 move.add(row);move.add(col);move.add(row-1);move.add(col+1);move.add(row-2);move.add(col+2);possibleMoves.add(move);move=new ArrayList<>();
