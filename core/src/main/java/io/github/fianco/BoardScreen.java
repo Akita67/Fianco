@@ -11,9 +11,15 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class BoardScreen extends InputAdapter implements Screen {
 
@@ -40,10 +46,20 @@ public class BoardScreen extends InputAdapter implements Screen {
     protected boolean isPlayer1White = true;
     List<List<Integer>> possibleMoves = new ArrayList<>();
     private boolean flag = false;
+    private Stage stage;
+    private TextButton undoButton;
+    private float undoButtonX = 700;
+    private float undoButtonY = 400;
+    private float undoButtonWidth = 100;
+    private float undoButtonHeight = 50;
+    // Add this in your class attributes
+    private Stack<int[][]> boardHistory;
 
     public BoardScreen(Main game) {
         this.game = game;
         gameLogic = new GameLogic(game);
+
+        boardHistory = new Stack<>(); // Initialize the stack for undo
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 1000, 600); // Set your camera dimensions
@@ -58,6 +74,24 @@ public class BoardScreen extends InputAdapter implements Screen {
         // Load stone textures
         blackStoneTexture = new Texture(Gdx.files.internal("black_stone.png"));
         whiteStoneTexture = new Texture(Gdx.files.internal("white_stone.png"));
+
+        // Undo Button
+        Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json")); // You will need a skin file
+        undoButton = new TextButton("Undo", skin);
+        undoButton.setPosition(undoButtonX, undoButtonY); // Position the button on the screen
+        undoButton.setSize(undoButtonWidth, undoButtonHeight);
+
+        stage = new Stage();
+        undoButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                //undoMove(); // Trigger undo when the button is clicked
+                undoMove();
+                System.out.println("sadas");
+            }
+        });
+
+        stage.addActor(undoButton); // Add the button to the stage
 
         // Set initial positions for the stones
         setInitialStonePositions();
@@ -90,7 +124,6 @@ public class BoardScreen extends InputAdapter implements Screen {
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
         shapeRenderer.end();
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -101,6 +134,9 @@ public class BoardScreen extends InputAdapter implements Screen {
         gameLogic.winCondition(this, board, game.mainBatch);
         gameLogic.finished(numWinPlayer1,numWinPlayer2);
 
+        // Render the stage (which contains the undo button)
+        stage.act(delta);
+        stage.draw();
     }
 
     private String getChessNotation(int row, int col) {
@@ -108,10 +144,36 @@ public class BoardScreen extends InputAdapter implements Screen {
         int rank = 1 + row; // 1 to 9
         return "" + file + rank;
     }
+    private void saveBoardState() {
+        int[][] boardCopy = new int[gridSize][gridSize];
+        for (int i = 0; i < gridSize; i++) {
+            System.arraycopy(board[i], 0, boardCopy[i], 0, gridSize);
+        }
+        boardHistory.push(boardCopy);
+    }
+    private void undoMove() {
+        if (!boardHistory.isEmpty()) {
+            board = boardHistory.pop(); // Restore the last board state
+            selectedRow = -1; // Deselect any selected stone
+            selectedCol = -1;
+            isBlackTurn = !isBlackTurn; // Reverse the turn
+        } else {
+            System.out.println("No moves to undo!");
+        }
+    }
+
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
+
+        // Check if the undo button was pressed
+        if (worldCoordinates.x + 140 >= undoButtonX && worldCoordinates.x + 140 <= undoButtonX + undoButtonWidth &&
+            worldCoordinates.y + 60 >= undoButtonY && worldCoordinates.y + 60 <= undoButtonY + undoButtonHeight) {
+            undoMove(); // Call undoMove when undo button is pressed
+            System.out.println("SJDIUADS");
+            return true;
+        }
 
         int col = (int) (worldCoordinates.x / cellSize);
         int row = (int) (worldCoordinates.y / cellSize);
@@ -127,8 +189,8 @@ public class BoardScreen extends InputAdapter implements Screen {
                     selectedCol = col;
                 }
             } else {
+                saveBoardState();
                 // Attempt to move the stone if a stone is already selected
-                System.out.println("hola");
                 if(flag){
                     System.out.println("Need to attack");
                     flag = AttackStone(row,col);
@@ -353,5 +415,6 @@ public class BoardScreen extends InputAdapter implements Screen {
         font.dispose();
         blackStoneTexture.dispose();
         whiteStoneTexture.dispose();
+        stage.dispose(); // Dispose of the stage
     }
 }
