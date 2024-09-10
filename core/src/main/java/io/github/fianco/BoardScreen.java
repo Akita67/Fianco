@@ -157,6 +157,7 @@ public class BoardScreen extends InputAdapter implements Screen {
             selectedRow = -1; // Deselect any selected stone
             selectedCol = -1;
             isBlackTurn = !isBlackTurn; // Reverse the turn
+            flag = false;
         } else {
             System.out.println("No moves to undo!");
         }
@@ -171,7 +172,6 @@ public class BoardScreen extends InputAdapter implements Screen {
         if (worldCoordinates.x + 140 >= undoButtonX && worldCoordinates.x + 140 <= undoButtonX + undoButtonWidth &&
             worldCoordinates.y + 60 >= undoButtonY && worldCoordinates.y + 60 <= undoButtonY + undoButtonHeight) {
             undoMove(); // Call undoMove when undo button is pressed
-            System.out.println("SJDIUADS");
             return true;
         }
 
