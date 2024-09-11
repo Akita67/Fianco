@@ -44,6 +44,25 @@ public class GameLogic {
             }
         }
 
+        // Check if still are any white or black stones
+        int countW = 0;
+        int countB = 0;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                if (board[i][j] == 1)
+                    countW++;
+                else if(board[i][j] == 2)
+                    countB++;
+                else if(countW!=0 && countB!=0)
+                    break;
+            }
+        }
+        if(countW==0){
+            blackWins = true;
+        } else if (countB==0) {
+            whiteWins = true;
+        }
+
         // Render win message if a player has won
 
         if (blackWins) {
