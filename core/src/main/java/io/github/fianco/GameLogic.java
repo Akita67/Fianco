@@ -25,7 +25,7 @@ public class GameLogic {
         layout = new GlyphLayout(); // Initialize layout to center text
     }
 
-    public void winCondition(BoardScreen boardScreen, int[][] board, SpriteBatch batch){
+    public void winCondition(BoardScreen boardScreen, int[][] board, SpriteBatch batch, Bot bot1, Bot bot2,boolean ai1, boolean ai2){
         this.board = board;
 
         // Check if a black stone has reached row 0 (top)
@@ -73,6 +73,10 @@ public class GameLogic {
             resetBoard();
             boardScreen.resetGrid();
             boardScreen.changePlayer1Side();
+            if(ai1)
+                bot1.changeSide();
+            if (ai2)
+                bot2.changeSide();
         } else if (whiteWins) {
             if(boardScreen.isPlayer1White)
                 boardScreen.addPlayer1Score();
@@ -81,6 +85,10 @@ public class GameLogic {
             resetBoard();
             boardScreen.resetGrid();
             boardScreen.changePlayer1Side();
+            if(ai1)
+                bot1.changeSide();
+            if (ai2)
+                bot2.changeSide();
         }
     }
 

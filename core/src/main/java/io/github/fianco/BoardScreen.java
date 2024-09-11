@@ -170,6 +170,7 @@ public class BoardScreen extends InputAdapter implements Screen {
             switch (index1) {
                 case 0: {
                     bot1 = new RandomBot(false,board);
+                    isPlayer1White = !isPlayer1White;
                     break;
                 }
             }
@@ -202,13 +203,13 @@ public class BoardScreen extends InputAdapter implements Screen {
         makeGrid();
         updateScore();
 
-        gameLogic.winCondition(this, board, game.mainBatch);
+        gameLogic.winCondition(this, board, game.mainBatch,bot1,bot2,ai1,ai2);
         gameLogic.finished(numWinPlayer1,numWinPlayer2);
 
         // If AI let it play
-        if(ai1 && !isBlackTurn){
+        if((!isPlayer1White && ai1 && !isBlackTurn) || (isPlayer1White && ai1 && isBlackTurn)){
             bot1.execMove(this,board);
-        } else if (ai2 && isBlackTurn) {
+        } else if ((isPlayer1White && ai2 && isBlackTurn) || (!isPlayer1White && ai2 && !isBlackTurn)) {
             bot2.execMove(this,board);
         }
 
@@ -436,7 +437,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 if (col>1 && row < 7 && board[row + 1][col - 1] == opponentStone) {
                     // Check if there's an empty space behind the opponent (for white moving up)
                     if (board[row + 2][col - 2] == 0) {
-                        getAttackMoves.add(new Move(row, col, row-2, col+2));
+                        getAttackMoves.add(new Move(row, col, row+2, col-2));
 
                     }
                 }

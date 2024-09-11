@@ -90,4 +90,7 @@ public class RandomBot extends Bot {
             validMoves.add(new Move(startRow, startCol, endRow, endCol));
         }
     }
+    public void changeSide(){
+        isBlack = !isBlack;
+    }
 }

@@ -36,7 +36,7 @@ public class PVBSelectionScreen implements Screen {
         bots1.setSize(200, 50);
 
         position = new SelectBox<String>(menuSkin);
-        position.setItems("Be Player 1", "Be Player 2");
+        position.setItems("Be First to Play", "Be Second to Play");
         position.setPosition(200, 350);
         position.setSize(200, 50);
 

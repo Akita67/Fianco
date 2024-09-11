@@ -44,4 +44,5 @@ public abstract class Bot {
     public long getRuntime() {
         return runtime;
     }
+    public void changeSide(){}
 }
