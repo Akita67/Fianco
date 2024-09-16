@@ -173,6 +173,10 @@ public class BoardScreen extends InputAdapter implements Screen {
                     isPlayer1White = !isPlayer1White;
                     break;
                 }
+                case 1:{
+                    bot1 = new AlphaBetaBot(false,board,1);
+                    break;
+                }
             }
         }
 
@@ -180,6 +184,10 @@ public class BoardScreen extends InputAdapter implements Screen {
             switch (index2) {
                 case 0: {
                     bot2 = new RandomBot(true,board);
+                    break;
+                }
+                case 1:{
+                    bot2 = new AlphaBetaBot(true,board,1);
                     break;
                 }
             }
@@ -286,7 +294,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 }
             }
         }
-        printBoard(board);
+        //printBoard(board);
         if(checkForCaptures(board, !isBlackTurn)){
             System.out.println("I can attack");
             flag = true;
@@ -437,7 +445,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 if (col>1 && row < 7 && board[row + 1][col - 1] == opponentStone) {
                     // Check if there's an empty space behind the opponent (for white moving up)
                     if (board[row + 2][col - 2] == 0) {
-                        getAttackMoves.add(new Move(row, col, row+2, col-2));
+                        getAttackMoves.add(new Move(row, col, row+2, col-2, true));
 
                     }
                 }
@@ -445,7 +453,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 if (col < board[row].length - 2 && row < 7 && board[row + 1][col + 1] == opponentStone) {
                     // Check if there's an empty space behind the opponent (for white moving up)
                     if (board[row + 2][col + 2] == 0) {
-                        getAttackMoves.add(new Move(row, col, row+2, col+2));
+                        getAttackMoves.add(new Move(row, col, row+2, col+2, true));
                     }
                 }
             }
@@ -457,7 +465,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 if (col > 1 && row > 1 && board[row - 1][col - 1] == opponentStone) {
                     // Check if there's an empty space behind the opponent (for black moving down)
                     if (board[row - 2][col - 2] == 0) {
-                        getAttackMoves.add(new Move(row, col, row-2, col-2));
+                        getAttackMoves.add(new Move(row, col, row-2, col-2, true));
                     }
                 }
 
@@ -465,7 +473,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                 if (col < board[col].length - 2 && row > 1 && board[row - 1][col + 1] == opponentStone) {
                     // Check if there's an empty space behind the opponent (for black moving down)
                     if (board[row - 2][col + 2] == 0) {
-                        getAttackMoves.add(new Move(row, col, row-2, col+2));
+                        getAttackMoves.add(new Move(row, col, row-2, col+2, true));
                     }
                 }
             }

@@ -68,7 +68,7 @@ public class RandomBot extends Bot {
         if(isBlack && row>0)
             addMoveIfValid(boardScreen, validMoves, row, col, row - 1, col); // Down
         if(!isBlack && row<8)
-                addMoveIfValid(boardScreen, validMoves, row, col, row + 1, col); // Forward
+            addMoveIfValid(boardScreen, validMoves, row, col, row + 1, col); // Forward
         if(col>0)
             addMoveIfValid(boardScreen, validMoves, row, col, row, col - 1); // Left
         if(col<8)
@@ -76,7 +76,7 @@ public class RandomBot extends Bot {
 
         // Check for attack moves
         List<Move> getAttackMoves = boardScreen.checkForCapturesSpec(board,!isBlack,row,col);
-        System.out.println(getAttackMoves.size());
+        //System.out.println(getAttackMoves.size());
         if (getAttackMoves.size()!=0) {
             possibleAttack.addAll(getAttackMoves); // Add any valid attack moves
         }
@@ -87,7 +87,7 @@ public class RandomBot extends Bot {
     // Check if a move is valid and add it to the list
     private void addMoveIfValid(BoardScreen boardScreen, List<Move> validMoves, int startRow, int startCol, int endRow, int endCol) {
         if (board[endRow][endCol] == 0) {
-            validMoves.add(new Move(startRow, startCol, endRow, endCol));
+            validMoves.add(new Move(startRow, startCol, endRow, endCol, false));
         }
     }
     public void changeSide(){
