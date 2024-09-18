@@ -177,6 +177,10 @@ public class BoardScreen extends InputAdapter implements Screen {
                     bot1 = new AlphaBetaBot(false,board,3);
                     break;
                 }
+                case 2:{
+                    bot1 = new MTCS(false,board);
+                    break;
+                }
             }
         }
 
@@ -187,7 +191,11 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 1:{
-                    bot2 = new AlphaBetaBot(true,board,3);
+                    bot2 = new AlphaBetaBot(true,board,1); // at 7 becomes slow
+                    break;
+                }
+                case 2:{
+                    bot1 = new MTCS(true,board);
                     break;
                 }
             }

@@ -47,12 +47,13 @@ public class AlphaBetaBot extends Bot {
             // remove all the moves with isAttackMove false
             moves.removeIf(move -> !move.isAttackMove);
         }
-        /*
+
         for(Move move : moves){
             System.out.println(move.startRow + " " + move.startCol);
         }
+        System.out.println();
 
-         */
+
         Move bestMove = null;
 
         if (maximizingPlayer) {
@@ -70,7 +71,7 @@ public class AlphaBetaBot extends Bot {
                 }
 
                 // Undo the move
-                undoMove(board, move, maximizingPlayer);
+                undoMove(board, move, isBlack);
 
                 alpha = Math.max(alpha, resultMove.evaluation);
                 if (beta <= alpha) {
@@ -93,7 +94,7 @@ public class AlphaBetaBot extends Bot {
                 }
 
                 // Undo the move
-                undoMove(board, move, maximizingPlayer);
+                undoMove(board, move, !isBlack);
 
                 beta = Math.min(beta, resultMove.evaluation);
                 if (beta <= alpha) {
@@ -176,9 +177,9 @@ public class AlphaBetaBot extends Bot {
         board[move.endRow][move.endCol] = board[move.startRow][move.startCol];
         board[move.startRow][move.startCol] = 0;
     }
-    public void undoMove(int[][] board, Move move, boolean maximizingplayer){
+    public void undoMove(int[][] board, Move move, boolean isBlackMax){
         if(move.isAttackMove()){
-            if(isBlackMax == maximizingplayer){
+            if(isBlackMax){
                 if(move.endCol>move.startCol)// Black attacked to the right
                     board[move.startRow-1][move.startCol+1] = 1;
                 else // Black attacked to the left
@@ -202,9 +203,9 @@ public class AlphaBetaBot extends Bot {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col)) {
-                    score += 10; // Example add: + (7 - row);
+                    score += 10 ; // Example add: + (7 - row);
                 } else if (isOpponentPiece(row, col)) {
-                    score -= 10; // Example add: + row;
+                    score -= 10 ; // Example add: + row;
                 }
             }
         }
