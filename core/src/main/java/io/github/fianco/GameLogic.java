@@ -28,6 +28,10 @@ public class GameLogic {
     public void winCondition(BoardScreen boardScreen, int[][] board, SpriteBatch batch, Bot bot1, Bot bot2,boolean ai1, boolean ai2){
         this.board = board;
 
+        // TODO need to implement a function so that when we can't move any pieces anymore that player loses
+        // TODO when the 3 last boardhistory are the same then we have a draw
+        //
+
         // Check if a black stone has reached row 0 (top)
         for (int i = 0; i < board[0].length; i++) {
             if (board[0][i] == 2) {
