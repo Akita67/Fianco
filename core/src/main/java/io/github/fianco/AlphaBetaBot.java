@@ -43,9 +43,16 @@ public class AlphaBetaBot extends Bot {
         List<Move> moves = getAllPossibleMoves(boardScreen, maximizingPlayer);
         // Sort the list by isAttackMove first (true before false)
         moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
+        if(moves.get(0).isAttackMove){
+            // remove all the moves with isAttackMove false
+            moves.removeIf(move -> !move.isAttackMove);
+        }
+        /*
         for(Move move : moves){
             System.out.println(move.startRow + " " + move.startCol);
         }
+
+         */
         Move bestMove = null;
 
         if (maximizingPlayer) {
@@ -53,7 +60,7 @@ public class AlphaBetaBot extends Bot {
 
             for (Move move : moves) {
                 // Simulate the move
-                makeMove(board, move, maximizingPlayer);
+                makeMove(board, move, isBlack);
                 Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, false);
 
                 if (resultMove.evaluation > maxEval) {
@@ -76,7 +83,7 @@ public class AlphaBetaBot extends Bot {
 
             for (Move move : moves) {
                 // Simulate the move
-                makeMove(board, move, maximizingPlayer);
+                makeMove(board, move, !isBlack);
                 Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, true);
 
                 if (resultMove.evaluation < minEval) {
@@ -99,22 +106,22 @@ public class AlphaBetaBot extends Bot {
     }
     public List<Move> getAllPossibleMoves(BoardScreen boardScreen, boolean maximization){
         List<Move> moves = new ArrayList<>();
-        if(isBlackMax == maximization){ // Black moves
+        if(maximization){ // Bot moves
             for (int row = 0; row < boardScreen.gridSize; row++) {
                 for (int col = 0; col < boardScreen.gridSize; col++) {
                     // Get all valid moves for this piece
                     if (isBotPiece(row, col)) {
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, true);
+                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
                         moves.addAll(pieceMoves); // Add to the list of moves
                     }
                 }
             }
-        }else{ // White moves
+        }else{ // Opponent moves
             for (int row = 0; row < boardScreen.gridSize; row++) {
                 for (int col = 0; col < boardScreen.gridSize; col++) {
                     // Get all valid moves for this piece
                     if (isOpponentPiece(row, col)){
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, false);
+                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
                         moves.addAll(pieceMoves); // Add to the list of moves
                     }
                 }
@@ -151,9 +158,9 @@ public class AlphaBetaBot extends Bot {
             validMoves.add(new Move(attack.startRow, attack.startCol, attack.endRow, attack.endCol, true, 0));
         }
     }
-    public void makeMove(int[][] board, Move move, boolean maximizingplayer){
+    public void makeMove(int[][] board, Move move, boolean isBlack){
         if(move.isAttackMove()){
-            if(isBlackMax == maximizingplayer){
+            if(isBlack){
                 if(move.endCol>move.startCol)// Black attack to the right
                     board[move.startRow-1][move.startCol+1] = 0;
                 else // Black attack to the left
@@ -195,9 +202,9 @@ public class AlphaBetaBot extends Bot {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col)) {
-                    score += 10; // Example: Give score for bot's pieces
+                    score += 10; // Example add: + (7 - row);
                 } else if (isOpponentPiece(row, col)) {
-                    score -= 10; // Example: Subtract score for opponent's pieces
+                    score -= 10; // Example add: + row;
                 }
             }
         }
@@ -257,5 +264,8 @@ public class AlphaBetaBot extends Bot {
             return true;
         }
         return false;
+    }
+    public void changeSide(){
+        isBlack = !isBlack;
     }
 }

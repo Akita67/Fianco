@@ -73,6 +73,7 @@ public class GameLogic {
             resetBoard();
             boardScreen.resetGrid();
             boardScreen.changePlayer1Side();
+            boardScreen.clearHistory();
             if(ai1)
                 bot1.changeSide();
             if (ai2)

@@ -174,7 +174,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 1:{
-                    bot1 = new AlphaBetaBot(false,board,1);
+                    bot1 = new AlphaBetaBot(false,board,3);
                     break;
                 }
             }
@@ -187,7 +187,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 1:{
-                    bot2 = new AlphaBetaBot(true,board,1);
+                    bot2 = new AlphaBetaBot(true,board,3);
                     break;
                 }
             }
@@ -239,7 +239,7 @@ public class BoardScreen extends InputAdapter implements Screen {
         boardHistory.push(boardCopy);
     }
     private void undoMove() {
-        if (!boardHistory.isEmpty() && ai1 || ai2) {
+        if (!boardHistory.isEmpty() && (ai1 || ai2)) {
             board = boardHistory.pop(); // Restore the last board state
             selectedRow = -1; // Deselect any selected stone
             selectedCol = -1;
@@ -572,6 +572,7 @@ public class BoardScreen extends InputAdapter implements Screen {
     public void changePlayer1Side(){
         isPlayer1White = !isPlayer1White;
     }
+    public void clearHistory() { boardHistory = new Stack<>();}
     public void printBoard(int[][] board){
         for (int i = board.length-1; i >= 0; i--) {
             for (int j = 0; j < board.length; j++) {
