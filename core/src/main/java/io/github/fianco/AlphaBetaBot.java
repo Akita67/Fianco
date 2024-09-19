@@ -5,7 +5,8 @@ import java.util.List;
 
 public class AlphaBetaBot extends Bot {
     private int depthLimit; // Depth limit for alpha-beta pruning
-    private boolean isBlackMax;
+    private boolean blackWins = false;
+    private boolean whiteWins = false;
 
     public AlphaBetaBot(boolean isBlack, int[][] board, int depthLimit) {
         super(isBlack, board);
@@ -14,11 +15,6 @@ public class AlphaBetaBot extends Bot {
 
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
-        if(isBlack){
-            isBlackMax=true;
-        }else{
-            isBlackMax=false;
-        }
         Move bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
         System.out.println("I found the best move");
         System.out.println(bestMove.startRow + " " + bestMove.startCol);
@@ -30,13 +26,23 @@ public class AlphaBetaBot extends Bot {
             } else {
                 boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
             }
+            System.out.println(bestMove.evaluation);
         }
     }
 
     // Alpha-Beta pruning algorithm to find the best move
     private Move alphaBeta(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, boolean maximizingPlayer) {
         if (depth == 0 || isGameOver(board)) {
-            int evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
+            int evaluation = 0;
+            if((whiteWins && !isBlack) || (blackWins && isBlack)){
+               evaluation = 10000;
+            } else if((whiteWins && isBlack) || (blackWins && !isBlack)){
+                evaluation = -10000;
+            }else{
+                evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
+            }
+            whiteWins=false;
+            blackWins=false;
             return new Move(-1,-1,-1,-1,false,evaluation); // Return the evaluation wrapped in a Move object
         }
 
@@ -48,10 +54,13 @@ public class AlphaBetaBot extends Bot {
             moves.removeIf(move -> !move.isAttackMove);
         }
 
+        /*
         for(Move move : moves){
             System.out.println(move.startRow + " " + move.startCol);
         }
         System.out.println();
+
+         */
 
 
         Move bestMove = null;
@@ -177,9 +186,9 @@ public class AlphaBetaBot extends Bot {
         board[move.endRow][move.endCol] = board[move.startRow][move.startCol];
         board[move.startRow][move.startCol] = 0;
     }
-    public void undoMove(int[][] board, Move move, boolean isBlackMax){
+    public void undoMove(int[][] board, Move move, boolean isBlacky){
         if(move.isAttackMove()){
-            if(isBlackMax){
+            if(isBlacky){
                 if(move.endCol>move.startCol)// Black attacked to the right
                     board[move.startRow-1][move.startCol+1] = 1;
                 else // Black attacked to the left
@@ -203,9 +212,15 @@ public class AlphaBetaBot extends Bot {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col)) {
-                    score += 10 ; // Example add: + (7 - row);
+                    if(isBlack)
+                        score += 10 + (7 - row); // Example add: + (7 - row);
+                    else
+                        score += 10 + row;
                 } else if (isOpponentPiece(row, col)) {
-                    score -= 10 ; // Example add: + row;
+                    if(isBlack)
+                        score -= 10 + (7 - row) ; // Example add: + row;
+                    else
+                        score -= 10 + row;
                 }
             }
         }
@@ -225,8 +240,6 @@ public class AlphaBetaBot extends Bot {
     // Method to check if the game is over
     private boolean isGameOver(int[][] board) {
         this.board = board;
-        boolean blackWins = false;
-        boolean whiteWins = false;
 
         // Check if a black stone has reached row 0 (top)
         for (int i = 0; i < board[0].length; i++) {

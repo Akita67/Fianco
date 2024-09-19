@@ -167,14 +167,14 @@ public class BoardScreen extends InputAdapter implements Screen {
     @Override
     public void show() {
         if (ai1) {
+            isPlayer1White = !isPlayer1White;
             switch (index1) {
                 case 0: {
                     bot1 = new RandomBot(false,board);
-                    isPlayer1White = !isPlayer1White;
                     break;
                 }
                 case 1:{
-                    bot1 = new AlphaBetaBot(false,board,3);
+                    bot1 = new AlphaBetaBot(false,board,5);
                     break;
                 }
                 case 2:{
@@ -191,7 +191,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 1:{
-                    bot2 = new AlphaBetaBot(true,board,1); // at 7 becomes slow
+                    bot2 = new AlphaBetaBot(true,board,5); // at 7 becomes slow
                     break;
                 }
                 case 2:{
