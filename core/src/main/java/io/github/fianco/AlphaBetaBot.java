@@ -236,7 +236,6 @@ public class AlphaBetaBot extends Bot {
     private boolean isOpponentPiece(int row, int col) {
         return (!isBlack && board[row][col] == 2) || (isBlack && board[row][col] == 1);
     }
-
     // Method to check if the game is over
     private boolean isGameOver(int[][] board) {
         this.board = board;

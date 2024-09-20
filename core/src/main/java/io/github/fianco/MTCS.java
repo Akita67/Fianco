@@ -20,21 +20,19 @@ public class MTCS extends Bot{
 
     public void calculate(BoardScreen boardScreen, int[][] board){
         possibleAttack = new ArrayList<>();
-        possibleMoves = getAllPossibleMoves(boardScreen);
-
-        if (possibleMoves.isEmpty()) {
-            // No valid moves, return or handle accordingly
-            return;
-        }
 
         // Run the MCTS to determine the best move
         Move bestMove = runMCTS(boardScreen, board);
+        System.out.println("blabla");
+        System.out.println(bestMove.startRow + " " + bestMove.startCol);
 
-        // Execute the best move
-        if (bestMove.isAttackMove()) {
-            boardScreen.botAttackStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
-        } else {
-            boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
+        if (bestMove != null) {
+            // Execute the best move
+            if (bestMove.isAttackMove()) {
+                boardScreen.botAttackStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
+            } else {
+                boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
+            }
         }
     }
 
@@ -63,24 +61,30 @@ public class MTCS extends Bot{
         return node;
     }
     private Node expansion(Node node, BoardScreen boardScreen) {
-        List<Move> possibleMoves = getAllPossibleMoves(boardScreen);
+        List<Move> possibleMoves = getAllPossibleMoves(boardScreen, node.board, node.isBlackNode);
+        for(Move move : possibleMoves){
+            System.out.println(move.startRow + " " + move.startCol);
+        }
+        System.out.println();
         possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
         if(possibleMoves.get(0).isAttackMove){
             // remove all the moves with isAttackMove false
             possibleMoves.removeIf(move -> !move.isAttackMove);
         }
         for (Move move : possibleMoves) {
-            int[][] newBoard = makeMove(node.board, move, node.isBlackNode); // Simulate the move TODO alternate isBlack and not
+            int[][] newBoard = makeMove(node.board, move, !node.isBlackNode); // Simulate the move TODO alternate isBlack and not
             node.addChild(new Node(node, newBoard, move, !node.isBlackNode));
         }
         return node.getRandomChild();
     }
     private int simulation(Node node, BoardScreen boardScreen) {
-        int[][] simulationBoard = node.board;  // Make a copy of the board
+        int[][] simulationBoard = deepCopyBoard(node.board);  // Make a copy of the board
         boolean currentPlayerIsBot = node.isBlackNode;
+        blackWins = false;
+        whiteWins = false;
 
         while (!isGameOver(simulationBoard)) {
-            List<Move> possibleMoves = getAllPossibleMoves(boardScreen);
+            List<Move> possibleMoves = getAllPossibleMoves(boardScreen, simulationBoard, currentPlayerIsBot);
             possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
             if(possibleMoves.get(0).isAttackMove){
                 // remove all the moves with isAttackMove false
@@ -91,9 +95,11 @@ public class MTCS extends Bot{
             }
             // TODO does not end the simulation
             Move randomMove = possibleMoves.get(random.nextInt(possibleMoves.size()));
+            //System.out.println(randomMove.startRow + " " + randomMove.startCol + " " + randomMove.endRow + " " + randomMove.endCol);
             simulationBoard = makeMove(simulationBoard, randomMove, currentPlayerIsBot);
             currentPlayerIsBot = !currentPlayerIsBot;  // Switch turns
         }
+        System.out.println("a game has ended");
 
         // Return the result of the simulation (1 for win, 0 for loss, 0.5 for draw)
         return getWinner() ? 1 : 0;
@@ -107,16 +113,28 @@ public class MTCS extends Bot{
             node = node.parent;
         }
     }
-    private List<Move> getAllPossibleMoves(BoardScreen boardScreen) {
+    private List<Move> getAllPossibleMoves(BoardScreen boardScreen, int[][] currentboard, Boolean isBlackNode) {
         List<Move> moves = new ArrayList<>();
 
         // Loop through the board to find all possible moves for the bot's pieces
-        for (int row = 0; row < boardScreen.gridSize; row++) {
-            for (int col = 0; col < boardScreen.gridSize; col++) {
-                if (isBotPiece(row, col)) {
-                    // Get all valid moves for this piece
-                    List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col);
-                    moves.addAll(pieceMoves); // Add to the list of moves
+        if(isBlackNode == isBlack) {
+            for (int row = 0; row < boardScreen.gridSize; row++) {
+                for (int col = 0; col < boardScreen.gridSize; col++) {
+                    if (isBotPiece(row, col)) {
+                        // Get all valid moves for this piece
+                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, currentboard, isBlack);
+                        moves.addAll(pieceMoves); // Add to the list of moves
+                    }
+                }
+            }
+        }else {
+            for (int row = 0; row < boardScreen.gridSize; row++) {
+                for (int col = 0; col < boardScreen.gridSize; col++) {
+                    if (isOpponentPiece(row, col)) {
+                        // Get all valid moves for this piece
+                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, currentboard, !isBlack);
+                        moves.addAll(pieceMoves); // Add to the list of moves
+                    }
                 }
             }
         }
@@ -127,51 +145,62 @@ public class MTCS extends Bot{
     private boolean isBotPiece(int row, int col) {
         return (isBlack && board[row][col] == 2) || (!isBlack && board[row][col] == 1);
     }
-    private List<Move> getValidMovesForPiece(BoardScreen boardScreen, int row, int col) {
+    private boolean isOpponentPiece(int row, int col) {
+        return (!isBlack && board[row][col] == 2) || (isBlack && board[row][col] == 1);
+    }
+    private List<Move> getValidMovesForPiece(BoardScreen boardScreen, int row, int col, int[][]currentboard, boolean isBlack) {
         List<Move> validMoves = new ArrayList<>();
 
         // Try moving in all four directions (forward for white,backward for black, left and right) if allowed
         if(isBlack && row>0)
-            addMoveIfValid(boardScreen, validMoves, row, col, row - 1, col); // Down
+            addMoveIfValid(currentboard, validMoves, row, col, row - 1, col); // Down
         if(!isBlack && row<8)
-            addMoveIfValid(boardScreen, validMoves, row, col, row + 1, col); // Forward
+            addMoveIfValid(currentboard, validMoves, row, col, row + 1, col); // Forward
         if(col>0)
-            addMoveIfValid(boardScreen, validMoves, row, col, row, col - 1); // Left
+            addMoveIfValid(currentboard, validMoves, row, col, row, col - 1); // Left
         if(col<8)
-            addMoveIfValid(boardScreen, validMoves, row, col, row, col + 1); // Right
+            addMoveIfValid(currentboard, validMoves, row, col, row, col + 1); // Right
 
         // Check for attack moves
-        List<Move> getAttackMoves = boardScreen.checkForCapturesSpec(board,!isBlack,row,col);
+        List<Move> getAttackMoves = boardScreen.checkForCapturesSpec(currentboard,!isBlack,row,col);
         //System.out.println(getAttackMoves.size());
         if (getAttackMoves.size()!=0) {
-            possibleAttack.addAll(getAttackMoves); // Add any valid attack moves
+            validMoves.addAll(getAttackMoves); // Add any valid attack moves
         }
 
         return validMoves;
     }
-    private void addMoveIfValid(BoardScreen boardScreen, List<Move> validMoves, int startRow, int startCol, int endRow, int endCol) {
+    private void addMoveIfValid(int[][] board, List<Move> validMoves, int startRow, int startCol, int endRow, int endCol) {
         if (board[endRow][endCol] == 0) {
             validMoves.add(new Move(startRow, startCol, endRow, endCol, false));
         }
     }
     public int[][] makeMove(int[][] board, Move move, boolean isBlack){
+        int [][] newboard = deepCopyBoard(board);
         if(move.isAttackMove()){
             if(isBlack){
                 if(move.endCol>move.startCol)// Black attack to the right
-                    board[move.startRow-1][move.startCol+1] = 0;
+                    newboard[move.startRow-1][move.startCol+1] = 0;
                 else // Black attack to the left
-                    board[move.startRow-1][move.startCol-1] = 0;
+                    newboard[move.startRow-1][move.startCol-1] = 0;
             }else{
                 if(move.endCol>move.startCol)// White attack to the right
-                    board[move.startRow+1][move.startCol+1] = 0;
+                    newboard[move.startRow+1][move.startCol+1] = 0;
                 else // White attack to the left
-                    board[move.startRow+1][move.startCol-1] = 0;
+                    newboard[move.startRow+1][move.startCol-1] = 0;
             }
 
         }
-        board[move.endRow][move.endCol] = board[move.startRow][move.startCol];
-        board[move.startRow][move.startCol] = 0;
-        return board;
+        newboard[move.endRow][move.endCol] = newboard[move.startRow][move.startCol];
+        newboard[move.startRow][move.startCol] = 0;
+        return newboard;
+    }
+    private int[][] deepCopyBoard(int[][] originalBoard) {
+        int[][] copy = new int[originalBoard.length][originalBoard[0].length];
+        for (int i = 0; i < originalBoard.length; i++) {
+            System.arraycopy(originalBoard[i], 0, copy[i], 0, originalBoard[i].length);
+        }
+        return copy;
     }
     private boolean isGameOver(int[][] board) {
         this.board = board;

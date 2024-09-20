@@ -178,7 +178,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot1 = new MTCS(false,board,10);
+                    bot1 = new MTCS(false,board,1);
                     break;
                 }
             }
@@ -195,7 +195,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot2 = new MTCS(true,board,10);
+                    bot2 = new MTCS(true,board,1);
                     break;
                 }
             }
