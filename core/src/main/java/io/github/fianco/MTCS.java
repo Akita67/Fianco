@@ -23,7 +23,6 @@ public class MTCS extends Bot{
 
         // Run the MCTS to determine the best move
         Move bestMove = runMCTS(boardScreen, board);
-        System.out.println("blabla");
         System.out.println(bestMove.startRow + " " + bestMove.startCol);
 
         if (bestMove != null) {
@@ -44,6 +43,9 @@ public class MTCS extends Bot{
             Node selectedNode = selection(rootNode);
             if (!selectedNode.isTerminal()) {
                 Node expandedNode = expansion(selectedNode,boardScreen);
+                if (expandedNode == null) {
+                    continue;  // No valid expansion possible, skip to next iteration
+                }
                 int simulationResult = simulation(expandedNode,boardScreen);
                 backpropagation(expandedNode, simulationResult);
             } else {
@@ -62,6 +64,9 @@ public class MTCS extends Bot{
     }
     private Node expansion(Node node, BoardScreen boardScreen) {
         List<Move> possibleMoves = getAllPossibleMoves(boardScreen, node.board, node.isBlackNode);
+        if (possibleMoves.isEmpty()) {
+            return null;  // No valid expansion possible
+        }
         for(Move move : possibleMoves){
             System.out.println(move.startRow + " " + move.startCol);
         }
@@ -72,7 +77,7 @@ public class MTCS extends Bot{
             possibleMoves.removeIf(move -> !move.isAttackMove);
         }
         for (Move move : possibleMoves) {
-            int[][] newBoard = makeMove(node.board, move, !node.isBlackNode); // Simulate the move TODO alternate isBlack and not
+            int[][] newBoard = makeMove(node.board, move, node.isBlackNode); // Simulate the move
             node.addChild(new Node(node, newBoard, move, !node.isBlackNode));
         }
         return node.getRandomChild();
@@ -85,13 +90,13 @@ public class MTCS extends Bot{
 
         while (!isGameOver(simulationBoard)) {
             List<Move> possibleMoves = getAllPossibleMoves(boardScreen, simulationBoard, currentPlayerIsBot);
+            if (possibleMoves.isEmpty()) {
+                break;
+            }
             possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
             if(possibleMoves.get(0).isAttackMove){
                 // remove all the moves with isAttackMove false
                 possibleMoves.removeIf(move -> !move.isAttackMove);
-            }
-            if (possibleMoves.isEmpty()) {
-                break;
             }
             // TODO does not end the simulation
             Move randomMove = possibleMoves.get(random.nextInt(possibleMoves.size()));
@@ -175,19 +180,24 @@ public class MTCS extends Bot{
             validMoves.add(new Move(startRow, startCol, endRow, endCol, false));
         }
     }
-    public int[][] makeMove(int[][] board, Move move, boolean isBlack){
+    public int[][] makeMove(int[][] board, Move move, boolean isBlacky){
+        System.out.println(move.startRow + " " + move.startCol + " " + move.endRow + " " + move.endCol);
         int [][] newboard = deepCopyBoard(board);
         if(move.isAttackMove()){
-            if(isBlack){
-                if(move.endCol>move.startCol)// Black attack to the right
-                    newboard[move.startRow-1][move.startCol+1] = 0;
-                else // Black attack to the left
-                    newboard[move.startRow-1][move.startCol-1] = 0;
+            if(isBlacky){
+                if(move.endCol>move.startCol){// Black attack to the right
+                    System.out.println("a");
+                    newboard[move.startRow-1][move.startCol+1] = 0;}
+                else{ // Black attack to the left
+                    System.out.println("b");
+                    newboard[move.startRow-1][move.startCol-1] = 0;}
             }else{
-                if(move.endCol>move.startCol)// White attack to the right
-                    newboard[move.startRow+1][move.startCol+1] = 0;
-                else // White attack to the left
-                    newboard[move.startRow+1][move.startCol-1] = 0;
+                if(move.endCol>move.startCol){// White attack to the right
+                    System.out.println("c");
+                    newboard[move.startRow+1][move.startCol+1] = 0;}
+                else{ // White attack to the left
+                    System.out.println("d");
+                    newboard[move.startRow+1][move.startCol-1] = 0;}
             }
 
         }
