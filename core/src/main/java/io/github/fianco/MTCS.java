@@ -67,10 +67,13 @@ public class MTCS extends Bot{
         if (possibleMoves.isEmpty()) {
             return null;  // No valid expansion possible
         }
+        /*
         for(Move move : possibleMoves){
             System.out.println(move.startRow + " " + move.startCol);
         }
         System.out.println();
+
+         */
         possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
         if(possibleMoves.get(0).isAttackMove){
             // remove all the moves with isAttackMove false
@@ -104,10 +107,9 @@ public class MTCS extends Bot{
             simulationBoard = makeMove(simulationBoard, randomMove, currentPlayerIsBot);
             currentPlayerIsBot = !currentPlayerIsBot;  // Switch turns
         }
-        System.out.println("a game has ended");
 
         // Return the result of the simulation (1 for win, 0 for loss, 0.5 for draw)
-        return getWinner() ? 1 : 0;
+        return getWinner() ? 1 : 0; //TODO makes sometimes killer moves while other are possible
 
     }
     private void backpropagation(Node node, int result) {
@@ -181,22 +183,18 @@ public class MTCS extends Bot{
         }
     }
     public int[][] makeMove(int[][] board, Move move, boolean isBlacky){
-        System.out.println(move.startRow + " " + move.startCol + " " + move.endRow + " " + move.endCol);
+        //System.out.println(move.startRow + " " + move.startCol + " " + move.endRow + " " + move.endCol);
         int [][] newboard = deepCopyBoard(board);
         if(move.isAttackMove()){
             if(isBlacky){
                 if(move.endCol>move.startCol){// Black attack to the right
-                    System.out.println("a");
                     newboard[move.startRow-1][move.startCol+1] = 0;}
                 else{ // Black attack to the left
-                    System.out.println("b");
                     newboard[move.startRow-1][move.startCol-1] = 0;}
             }else{
                 if(move.endCol>move.startCol){// White attack to the right
-                    System.out.println("c");
                     newboard[move.startRow+1][move.startCol+1] = 0;}
                 else{ // White attack to the left
-                    System.out.println("d");
                     newboard[move.startRow+1][move.startCol-1] = 0;}
             }
 
@@ -259,6 +257,9 @@ public class MTCS extends Bot{
         }else{
             return false;
         }
+    }
+    public void changeSide(){
+        isBlack = !isBlack;
     }
 
 }
