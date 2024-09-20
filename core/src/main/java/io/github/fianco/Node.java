@@ -10,14 +10,16 @@ public class Node {
     Move move;
     int wins;
     int visits;
+    boolean isBlackNode;
 
-    public Node(Node parent, int[][] board, Move move) {
+    public Node(Node parent, int[][] board, Move move, boolean isBlackNode) {
         this.parent = parent;
         this.board = board;
         this.move = move;
         this.children = new ArrayList<>();
         this.wins = 0;
         this.visits = 0;
+        this.isBlackNode = isBlackNode;
     }
 
     public boolean isLeaf() {
