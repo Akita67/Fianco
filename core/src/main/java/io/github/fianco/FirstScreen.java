@@ -81,7 +81,6 @@ public class FirstScreen implements Screen {
             this.dispose();
             game.setScreen(new PVBSelectionScreen(game));
         }
-        /*
         BVB.addListener(new ClickListener() {
             public void touchUp(InputEvent e, float x, float y, int point, int button) {
                 clickBVB = true;
@@ -93,7 +92,6 @@ public class FirstScreen implements Screen {
             game.setScreen(new BVBSelectionScreen(game, true, true));
         }
 
-         */
         stage.act(delta);
         stage.draw();
 

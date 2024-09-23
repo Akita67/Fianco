@@ -20,6 +20,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 public class BoardScreen extends InputAdapter implements Screen {
 
@@ -167,18 +168,19 @@ public class BoardScreen extends InputAdapter implements Screen {
     @Override
     public void show() {
         if (ai1) {
-            isPlayer1White = !isPlayer1White;
+            if(!(ai1 && ai2))
+                isPlayer1White = !isPlayer1White;
             switch (index1) {
                 case 0: {
                     bot1 = new RandomBot(false,board);
                     break;
                 }
                 case 1:{
-                    bot1 = new AlphaBetaBot(false,board,5);
+                    bot1 = new AlphaBetaBot(false,board,6);
                     break;
                 }
                 case 2:{
-                    bot1 = new MTCS(false,board,8000);
+                    bot1 = new MTCS(false,board,10000);
                     break;
                 }
             }
@@ -191,11 +193,11 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 1:{
-                    bot2 = new AlphaBetaBot(true,board,5); // at 7 becomes slow
+                    bot2 = new AlphaBetaBot(true,board,6); // at 7 becomes slow
                     break;
                 }
                 case 2:{
-                    bot2 = new MTCS(true,board,8000);
+                    bot2 = new MTCS(true,board,10000);
                     break;
                 }
             }
@@ -223,7 +225,19 @@ public class BoardScreen extends InputAdapter implements Screen {
         gameLogic.finished(numWinPlayer1,numWinPlayer2);
 
         // If AI let it play
-        if((!isPlayer1White && ai1 && !isBlackTurn) || (isPlayer1White && ai1 && isBlackTurn)){
+        if(ai1 && ai2){
+            if(bot1.isBlack == isBlackTurn){
+                bot1.execMove(this,board);
+            }else{
+                bot2.execMove(this,board);
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        else if((!isPlayer1White && ai1 && !isBlackTurn) || (isPlayer1White && ai1 && isBlackTurn)){
             bot1.execMove(this,board);
         } else if ((isPlayer1White && ai2 && isBlackTurn) || (!isPlayer1White && ai2 && !isBlackTurn)) {
             bot2.execMove(this,board);

@@ -101,7 +101,6 @@ public class MTCS extends Bot{
                 // remove all the moves with isAttackMove false
                 possibleMoves.removeIf(move -> !move.isAttackMove);
             }
-            // TODO does not end the simulation
             Move randomMove = possibleMoves.get(random.nextInt(possibleMoves.size()));
             //System.out.println(randomMove.startRow + " " + randomMove.startCol + " " + randomMove.endRow + " " + randomMove.endCol);
             simulationBoard = makeMove(simulationBoard, randomMove, currentPlayerIsBot);
