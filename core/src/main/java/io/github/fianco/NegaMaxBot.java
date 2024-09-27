@@ -3,19 +3,19 @@ package io.github.fianco;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AlphaBetaBot extends Bot {
+public class NegaMaxBot extends Bot {
     private int depthLimit; // Depth limit for alpha-beta pruning
     private boolean blackWins = false;
     private boolean whiteWins = false;
 
-    public AlphaBetaBot(boolean isBlack, int[][] board, int depthLimit) {
+    public NegaMaxBot(boolean isBlack, int[][] board, int depthLimit) {
         super(isBlack, board);
         this.depthLimit = depthLimit; // Set the maximum depth for the search
     }
 
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
-        Move bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        Move bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1);
         System.out.println("I found the best move");
         System.out.println(bestMove.startRow + " " + bestMove.startCol);
 
@@ -29,12 +29,11 @@ public class AlphaBetaBot extends Bot {
             System.out.println(bestMove.evaluation);
         }
     }
-    // Alpha-Beta pruning algorithm to find the best move
-    private Move alphaBeta(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, boolean maximizingPlayer) {
+    private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int color) {
         if (depth == 0 || isGameOver(board)) {
             int evaluation;
             if((whiteWins && !isBlack) || (blackWins && isBlack)){
-               evaluation = 10000;
+                evaluation = 10000;
             } else if((whiteWins && isBlack) || (blackWins && !isBlack)){
                 evaluation = -10000;
             }else{
@@ -42,67 +41,45 @@ public class AlphaBetaBot extends Bot {
             }
             whiteWins=false;
             blackWins=false;
-            return new Move(-1,-1,-1,-1,false,evaluation); // Return the evaluation wrapped in a Move object
+            return new Move(-1,-1,-1,-1,false,color * evaluation); // Return the evaluation wrapped in a Move object
         }
 
-        List<Move> moves = getAllPossibleMoves(boardScreen, maximizingPlayer);
-        // Sort the list by isAttackMove first (true before false)
+        List<Move> moves = getAllPossibleMoves(boardScreen, color == 1); // Color == 1 for current player, -1 for opponent
         moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
-        if(moves.get(0).isAttackMove){
-            // remove all the moves with isAttackMove false
+
+        if (moves.get(0).isAttackMove) {
             moves.removeIf(move -> !move.isAttackMove);
         }
+
         Move bestMove = null;
+        int maxEval = Integer.MIN_VALUE;
 
-        if (maximizingPlayer) {
-            int maxEval = Integer.MIN_VALUE;
+        for (Move move : moves) {
+            // Simulate the move
+            //(!isBlack && color == 1 || isBlack && color == -1)
+            // color == 1 if current player is black, else white
+            makeMove(board, move, isBlack && color == 1 || !isBlack && color == -1); // color == 1 if current player is black, else white
 
-            for (Move move : moves) {
-                // Simulate the move
-                makeMove(board, move, isBlack);
-                Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, false);
+            Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -color); // Negate alpha, beta, and color
 
-                if (resultMove.evaluation > maxEval) {
-                    maxEval = resultMove.evaluation;
-                    bestMove = move;
-                    bestMove.evaluation = maxEval;
-                }
-
-                // Undo the move
-                undoMove(board, move, isBlack);
-
-                alpha = Math.max(alpha, resultMove.evaluation);
-                if (beta <= alpha) {
-                    break; // Beta cut-off
-                }
+            if (-resultMove.evaluation > maxEval) {
+                maxEval = -resultMove.evaluation;
+                bestMove = move;
+                bestMove.evaluation = maxEval;
             }
 
-        } else {
-            int minEval = Integer.MAX_VALUE;
+            // Undo the move
+            undoMove(board, move, isBlack && color == 1 || !isBlack && color == -1);
 
-            for (Move move : moves) {
-                // Simulate the move
-                makeMove(board, move, !isBlack);
-                Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, true);
-
-                if (resultMove.evaluation < minEval) {
-                    minEval = resultMove.evaluation;
-                    bestMove = move;
-                    bestMove.evaluation = minEval;
-                }
-
-                // Undo the move
-                undoMove(board, move, !isBlack);
-
-                beta = Math.min(beta, resultMove.evaluation);
-                if (beta <= alpha) {
-                    break; // Alpha cut-off
-                }
+            alpha = Math.max(alpha, -resultMove.evaluation);
+            if (alpha >= beta) {
+                break; // Beta cut-off
             }
         }
 
         return bestMove;
     }
+
     public List<Move> getAllPossibleMoves(BoardScreen boardScreen, boolean maximization){
         List<Move> moves = new ArrayList<>();
         if(maximization){ // Bot moves
