@@ -55,10 +55,7 @@ public class NegaMaxBot extends Bot {
         int maxEval = Integer.MIN_VALUE;
 
         for (Move move : moves) {
-            // Simulate the move
-            //(!isBlack && color == 1 || isBlack && color == -1)
-            // color == 1 if current player is black, else white
-            makeMove(board, move, isBlack && color == 1 || !isBlack && color == -1); // color == 1 if current player is black, else white
+            makeMove(board, move, isBlack && color == 1 || !isBlack && color == -1); // if true move is black, else white
 
             Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -color); // Negate alpha, beta, and color
 
@@ -71,12 +68,21 @@ public class NegaMaxBot extends Bot {
             // Undo the move
             undoMove(board, move, isBlack && color == 1 || !isBlack && color == -1);
 
-            alpha = Math.max(alpha, -resultMove.evaluation);
+            alpha = Math.max(alpha, maxEval);
             if (alpha >= beta) {
-                break; // Beta cut-off
+                break; // Beta cut-off, no need to explore further if a winning move is found
             }
         }
+        /*
+        for (Move move : moves) {
+            System.out.println(move.startRow + " " + move.startCol + " eval: " + move.evaluation);
+        }
 
+         */
+        if (bestMove == null) {
+            bestMove = moves.get(0); // Fallback in case no best move was found
+        }
+        System.out.println(bestMove.startRow + " " + bestMove.startCol + " eval : " + bestMove.evaluation);
         return bestMove;
     }
 
