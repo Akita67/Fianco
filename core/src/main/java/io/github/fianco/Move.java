@@ -27,4 +27,9 @@ public class Move {
     public boolean isAttackMove(){
         return this.isAttackMove;
     }
+    // Add a clone method
+    public Move clone() {
+        // Create a new instance of Move with the same values
+        return new Move(this.startRow, this.startCol, this.endRow, this.endCol, this.isAttackMove, this.evaluation);
+    }
 }

@@ -16,8 +16,7 @@ public class NegaMaxBot extends Bot {
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
         Move bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1);
-        System.out.println("I found the best move");
-        System.out.println(bestMove.startRow + " " + bestMove.startCol);
+        System.out.println("best move " + bestMove.startRow + " " + bestMove.startCol + " to " + bestMove.endRow + " " + bestMove.endCol + " " + bestMove.evaluation);
 
         if (bestMove != null) {
             // Execute the move
@@ -26,25 +25,15 @@ public class NegaMaxBot extends Bot {
             } else {
                 boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
             }
-            System.out.println(bestMove.evaluation);
         }
     }
-    private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int color) {
+    private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max) {
         if (depth == 0 || isGameOver(board)) {
-            int evaluation;
-            if((whiteWins && !isBlack) || (blackWins && isBlack)){
-                evaluation = 10000;
-            } else if((whiteWins && isBlack) || (blackWins && !isBlack)){
-                evaluation = -10000;
-            }else{
-                evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
-            }
-            whiteWins=false;
-            blackWins=false;
-            return new Move(-1,-1,-1,-1,false,color * evaluation); // Return the evaluation wrapped in a Move object
+            int evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
+            return new Move(-1,-1,-1,-1,false,max * evaluation); // Return the evaluation wrapped in a Move object
         }
 
-        List<Move> moves = getAllPossibleMoves(boardScreen, color == 1); // Color == 1 for current player, -1 for opponent
+        List<Move> moves = getAllPossibleMoves(boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
         moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
 
         if (moves.get(0).isAttackMove) {
@@ -55,56 +44,75 @@ public class NegaMaxBot extends Bot {
         int maxEval = Integer.MIN_VALUE;
 
         for (Move move : moves) {
-            makeMove(board, move, isBlack && color == 1 || !isBlack && color == -1); // if true move is black, else white
+            makeMove(board, move, isBlack && max == 1 || !isBlack && max == -1); // if true move is black, else white
 
-            Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -color); // Negate alpha, beta, and color
+            Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -max); // Negate alpha, beta, and color
 
             if (-resultMove.evaluation > maxEval) {
                 maxEval = -resultMove.evaluation;
-                bestMove = move;
+                bestMove = move.clone();
                 bestMove.evaluation = maxEval;
             }
 
             // Undo the move
-            undoMove(board, move, isBlack && color == 1 || !isBlack && color == -1);
+            undoMove(board, move, isBlack && max == 1 || !isBlack && max == -1);
 
             alpha = Math.max(alpha, maxEval);
             if (alpha >= beta) {
                 break; // Beta cut-off, no need to explore further if a winning move is found
             }
         }
-        /*
-        for (Move move : moves) {
-            System.out.println(move.startRow + " " + move.startCol + " eval: " + move.evaluation);
-        }
 
-         */
         if (bestMove == null) {
             bestMove = moves.get(0); // Fallback in case no best move was found
         }
-        System.out.println(bestMove.startRow + " " + bestMove.startCol + " eval : " + bestMove.evaluation);
+        //System.out.println(bestMove.startRow + " " + bestMove.startCol + " eval : " + bestMove.evaluation);
         return bestMove;
     }
 
     public List<Move> getAllPossibleMoves(BoardScreen boardScreen, boolean maximization){
         List<Move> moves = new ArrayList<>();
         if(maximization){ // Bot moves
-            for (int row = 0; row < boardScreen.gridSize; row++) {
-                for (int col = 0; col < boardScreen.gridSize; col++) {
-                    // Get all valid moves for this piece
-                    if (isBotPiece(row, col)) {
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
-                        moves.addAll(pieceMoves); // Add to the list of moves
+            if(isBlack){
+                for (int row = 0; row < boardScreen.gridSize; row++) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isBotPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
+                    }
+                }
+            }else{
+                for (int row = 8; row >= 0; row--) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isBotPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
                     }
                 }
             }
         }else{ // Opponent moves
-            for (int row = 0; row < boardScreen.gridSize; row++) {
-                for (int col = 0; col < boardScreen.gridSize; col++) {
-                    // Get all valid moves for this piece
-                    if (isOpponentPiece(row, col)){
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
-                        moves.addAll(pieceMoves); // Add to the list of moves
+            if(!isBlack){
+                for (int row = 0; row < boardScreen.gridSize; row++) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isOpponentPiece(row, col)){
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
+                    }
+                }
+            }else{
+                for (int row = 8; row >= 0; row--) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isOpponentPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
                     }
                 }
             }
@@ -181,22 +189,53 @@ public class NegaMaxBot extends Bot {
     // Method to evaluate the board: positive for bot, negative for opponent
     private int evaluateBoard(int[][] board) {
         int score = 0;
+
+        // Weights for each component of the evaluation function
+        int distanceWeight = 5;
+        int controlWeight = 3;
+        int pieceValue = 15;
+        for (int col = 0; col < board[8].length; col++) {
+            if (board[8][col] == 1) { // If white reaches the last row
+                if(isBlack)
+                    return -10000; // Assign a high score for winning
+                else
+                    return 10000;
+            }
+            else if (board[0][col] == 2) { // If black reaches the last row
+                if(isBlack)
+                    return 10000; // Assign a high score for winning
+                else
+                    return -10000;
+            }
+        }
+
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col)) {
                     if(isBlack)
-                        score += 10 + (7 - row); // Example add: + (7 - row);
+                        score += pieceValue + distanceWeight * (7 - row); // Example add: + (7 - row);
                     else
-                        score += 10 + row;
+                        score += pieceValue + distanceWeight * row;
+
+                    // 2. Control of the Board (central rows/columns are more valuable)
+                    score += controlWeight * centralityValue(row, col);
+
                 } else if (isOpponentPiece(row, col)) {
-                    if(isBlack)
-                        score -= 10 + (7 - row) ; // Example add: + row;
+                    if(!isBlack)
+                        score -= (pieceValue + distanceWeight * (7 - row)); // Example add: + row;
                     else
-                        score -= 10 + row;
+                        score -= (pieceValue + distanceWeight * row);
+
+                    // 2. Control of the Board (central rows/columns are more valuable)
+                    score -= controlWeight * centralityValue(row, col);
                 }
             }
         }
         return score;
+    }
+    private int centralityValue(int row, int col) {
+        // Higher values for positions near the center (4, 4)
+        return 4 - Math.abs(4 - row) + 4 - Math.abs(4 - col);
     }
 
     // Check if the stone belongs to the bot

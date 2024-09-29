@@ -16,8 +16,6 @@ public class AlphaBetaBot extends Bot {
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
         Move bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-        System.out.println("I found the best move");
-        System.out.println(bestMove.startRow + " " + bestMove.startCol);
 
         if (bestMove != null) {
             // Execute the move
@@ -34,7 +32,7 @@ public class AlphaBetaBot extends Bot {
         if (depth == 0 || isGameOver(board)) {
             int evaluation;
             if((whiteWins && !isBlack) || (blackWins && isBlack)){
-               evaluation = 10000;
+                evaluation = 10000;
             } else if((whiteWins && isBlack) || (blackWins && !isBlack)){
                 evaluation = -10000;
             }else{
@@ -106,22 +104,47 @@ public class AlphaBetaBot extends Bot {
     public List<Move> getAllPossibleMoves(BoardScreen boardScreen, boolean maximization){
         List<Move> moves = new ArrayList<>();
         if(maximization){ // Bot moves
-            for (int row = 0; row < boardScreen.gridSize; row++) {
-                for (int col = 0; col < boardScreen.gridSize; col++) {
-                    // Get all valid moves for this piece
-                    if (isBotPiece(row, col)) {
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
-                        moves.addAll(pieceMoves); // Add to the list of moves
+            // Generate in order to start with moves that are closer to the first row
+            if(isBlack){
+                for (int row = 0; row < boardScreen.gridSize; row++) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isBotPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
+                    }
+                }
+            }else{ // Generate in order to start with moves that are closer to the last row
+                for (int row = 8; row >= 0; row--) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isBotPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
                     }
                 }
             }
         }else{ // Opponent moves
-            for (int row = 0; row < boardScreen.gridSize; row++) {
-                for (int col = 0; col < boardScreen.gridSize; col++) {
-                    // Get all valid moves for this piece
-                    if (isOpponentPiece(row, col)){
-                        List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
-                        moves.addAll(pieceMoves); // Add to the list of moves
+            if(!isBlack){
+                for (int row = 0; row < boardScreen.gridSize; row++) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isOpponentPiece(row, col)){
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
+                    }
+                }
+            }else{
+                for (int row = 8; row >= 0; row--) {
+                    for (int col = 0; col < boardScreen.gridSize; col++) {
+                        // Get all valid moves for this piece
+                        if (isOpponentPiece(row, col)) {
+                            List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
+                            moves.addAll(pieceMoves); // Add to the list of moves
+                        }
                     }
                 }
             }
@@ -175,9 +198,9 @@ public class AlphaBetaBot extends Bot {
         board[move.endRow][move.endCol] = board[move.startRow][move.startCol];
         board[move.startRow][move.startCol] = 0;
     }
-    public void undoMove(int[][] board, Move move, boolean isBlacky){
+    public void undoMove(int[][] board, Move move, boolean isBlack){
         if(move.isAttackMove()){
-            if(isBlacky){
+            if(isBlack){
                 if(move.endCol>move.startCol)// Black attacked to the right
                     board[move.startRow-1][move.startCol+1] = 1;
                 else // Black attacked to the left
@@ -206,7 +229,7 @@ public class AlphaBetaBot extends Bot {
                     else
                         score += 10 + row;
                 } else if (isOpponentPiece(row, col)) {
-                    if(isBlack)
+                    if(!isBlack)
                         score -= 10 + (7 - row) ; // Example add: + row;
                     else
                         score -= 10 + row;
