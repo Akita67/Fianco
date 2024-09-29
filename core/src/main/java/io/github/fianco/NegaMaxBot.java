@@ -28,8 +28,17 @@ public class NegaMaxBot extends Bot {
         }
     }
     private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max) {
-        if (depth == 0 || isGameOver(board)) {
-            int evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
+        if (depth == 0 || isGameOver(board,boardScreen,max)) {
+            int evaluation;
+            if((blackWins && isBlack) || (whiteWins && !isBlack)){
+                evaluation = 10000;
+            } else if ((blackWins && !isBlack) || (whiteWins && isBlack)) {
+                evaluation = -10000;
+            }else {
+                evaluation = evaluateBoard(board); // Evaluate the board at the leaf node
+            }
+            blackWins = false;
+            whiteWins = false;
             return new Move(-1,-1,-1,-1,false,max * evaluation); // Return the evaluation wrapped in a Move object
         }
 
@@ -125,20 +134,20 @@ public class NegaMaxBot extends Bot {
 
         // Try moving in all four directions (forward for white,backward for black, left and right) if allowed
         if(playAsBlack && row>0)
-            addMoveIfValid(boardScreen, validMoves, row, col, row - 1, col); // Down
+            addMoveIfValid(validMoves, row, col, row - 1, col); // Down
         if(!playAsBlack && row<8)
-            addMoveIfValid(boardScreen, validMoves, row, col, row + 1, col); // Forward
+            addMoveIfValid(validMoves, row, col, row + 1, col); // Forward
         if(col>0)
-            addMoveIfValid(boardScreen, validMoves, row, col, row, col - 1); // Left
+            addMoveIfValid(validMoves, row, col, row, col - 1); // Left
         if(col<8)
-            addMoveIfValid(boardScreen, validMoves, row, col, row, col + 1); // Right
+            addMoveIfValid(validMoves, row, col, row, col + 1); // Right
 
         // Check for attack moves
         AddAttackToList(boardScreen.checkForCapturesSpec(board,!playAsBlack,row,col),validMoves);
 
         return validMoves;
     }
-    private void addMoveIfValid(BoardScreen boardScreen, List<Move> validMoves, int startRow, int startCol, int endRow, int endCol) {
+    private void addMoveIfValid(List<Move> validMoves, int startRow, int startCol, int endRow, int endCol) {
         if (board[endRow][endCol] == 0) {
             validMoves.add(new Move(startRow, startCol, endRow, endCol, false, 0));
         }
@@ -193,21 +202,7 @@ public class NegaMaxBot extends Bot {
         // Weights for each component of the evaluation function
         int distanceWeight = 5;
         int controlWeight = 3;
-        int pieceValue = 15;
-        for (int col = 0; col < board[8].length; col++) {
-            if (board[8][col] == 1) { // If white reaches the last row
-                if(isBlack)
-                    return -10000; // Assign a high score for winning
-                else
-                    return 10000;
-            }
-            else if (board[0][col] == 2) { // If black reaches the last row
-                if(isBlack)
-                    return 10000; // Assign a high score for winning
-                else
-                    return -10000;
-            }
-        }
+        int pieceValue = 30;
 
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
@@ -248,9 +243,8 @@ public class NegaMaxBot extends Bot {
         return (!isBlack && board[row][col] == 2) || (isBlack && board[row][col] == 1);
     }
     // Method to check if the game is over
-    private boolean isGameOver(int[][] board) {
+    private boolean isGameOver(int[][] board, BoardScreen boardScreen, int max) {
         this.board = board;
-
         // Check if a black stone has reached row 0 (top)
         for (int i = 0; i < board[0].length; i++) {
             if (board[0][i] == 2) {
@@ -258,7 +252,6 @@ public class NegaMaxBot extends Bot {
                 return true;
             }
         }
-
         // Check if a white stone has reached row 8 (bottom)
         for (int i = 0; i < board[8].length; i++) {
             if (board[8][i] == 1) {
@@ -266,7 +259,6 @@ public class NegaMaxBot extends Bot {
                 return true;
             }
         }
-
         // Check if still are any white or black stones
         int countW = 0;
         int countB = 0;
@@ -287,6 +279,16 @@ public class NegaMaxBot extends Bot {
             whiteWins = true;
             return true;
         }
+        List<Move> moves = getAllPossibleMoves(boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
+        if(moves.isEmpty()){
+            if((max==1 && isBlack) || (max==-1 && !isBlack)){
+                whiteWins=true;
+            }else{
+                blackWins=true;
+            }
+            return true;
+        }
+
         return false;
     }
     public void changeSide(){
