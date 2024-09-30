@@ -31,7 +31,7 @@ public class PVBSelectionScreen implements Screen {
         menuSkin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
         bots1 = new SelectBox<String>(menuSkin);
-        bots1.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "OneLookAhead bot", "Depth Limiting Tree bot", "Predict bot (supervised learning)", "BOB (Double DQN)");
+        bots1.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "Iterative Deepening");
         bots1.setPosition(500, 350);
         bots1.setSize(200, 50);
 

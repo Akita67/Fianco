@@ -3,20 +3,22 @@ package io.github.fianco;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NegaMaxBot extends Bot {
+public class IterativeDeepening extends Bot {
     private int depthLimit; // Depth limit for alpha-beta pruning
     private boolean blackWins = false;
     private boolean whiteWins = false;
+    private final long timeConstraint;
 
 
-    public NegaMaxBot(boolean isBlack, int[][] board, int depthLimit) {
+    public IterativeDeepening(boolean isBlack, int[][] board, int depthLimit, long timeConstraint) {
         super(isBlack, board);
         this.depthLimit = depthLimit; // Set the maximum depth for the search
+        this.timeConstraint = timeConstraint;
     }
 
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
-        Move bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1);
+        Move bestMove = iterativeDeepening(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1, timeConstraint);
         System.out.println("best move " + bestMove.startRow + " " + bestMove.startCol + " to " + bestMove.endRow + " " + bestMove.endCol + " " + bestMove.evaluation);
 
         if (bestMove != null) {
@@ -28,6 +30,50 @@ public class NegaMaxBot extends Bot {
             }
         }
     }
+    private Move iterativeDeepening(BoardScreen boardScreen, int[][] board, int maxDepth, int alpha, int beta, int max, long timeLimitMillis) {
+        Move bestMove = null;
+        // Capture the start time of the search
+        long startTime = System.currentTimeMillis();
+
+        // Iteratively increase the depth from 1 up to the maximum depth limit
+        for (int currentDepth = 1; currentDepth <= maxDepth; currentDepth++) {
+            // Check the elapsed time
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            if (elapsedTime >= timeLimitMillis) {
+                System.out.println("Time limit reached. Stopping search at depth: " + (currentDepth - 1));
+                break;
+            }
+
+            System.out.println("Searching at depth: " + currentDepth);
+
+            // If you only have one move and it's an attack move you should not look further
+            List<Move> moves = getAllPossibleMoves(boardScreen, max == 1);
+            moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
+
+            if (moves.get(0).isAttackMove) {
+                moves.removeIf(move -> !move.isAttackMove);
+            }
+            if(currentDepth==1 && moves.size()==1){
+                bestMove = moves.get(0);
+                break;
+            }
+
+            // Perform a negamax search with the current depth limit
+            Move currentBestMove = negamax(boardScreen, board, currentDepth, alpha, beta, max);
+
+            if (currentBestMove != null) {
+                bestMove = currentBestMove; // Update the best move found so far
+
+                // If we find a winning move, break out of the loop early
+                if (Math.abs(bestMove.evaluation) == 10000) {
+                    break;
+                }
+            }
+        }
+
+        return bestMove;
+    }
+
     private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max) {
         if (depth == 0 || isGameOver(board,boardScreen,max)) {
             int evaluation;

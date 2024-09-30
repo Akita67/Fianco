@@ -180,11 +180,15 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot1 = new NegaMaxBot(false,board,6);
+                    bot1 = new NegaMaxBot(false,board,8);
                     break;
                 }
                 case 3:{
                     bot1 = new MTCS(false,board,20000);
+                    break;
+                }
+                case 4:{
+                    bot1 = new IterativeDeepening(false,board,20, 1000);
                     break;
                 }
             }
@@ -201,11 +205,15 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot2 = new NegaMaxBot(true,board,6);
+                    bot2 = new NegaMaxBot(true,board,8);
                     break;
                 }
                 case 3:{
                     bot2 = new MTCS(true,board,20000);
+                    break;
+                }
+                case 4:{
+                    bot2 = new IterativeDeepening(true,board,20, 1000);
                     break;
                 }
             }
