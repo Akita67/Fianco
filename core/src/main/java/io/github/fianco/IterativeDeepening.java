@@ -248,7 +248,7 @@ public class IterativeDeepening extends Bot {
         int score = 0;
 
         // Weights for each component of the evaluation function
-        int distanceWeight = 5;
+        int distanceWeight = 4;
         int controlWeight = 3;
         int pieceValue = 30;
 
