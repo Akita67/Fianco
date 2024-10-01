@@ -5,9 +5,6 @@ import java.util.List;
 
 public class NegaMaxBot extends Bot {
     private int depthLimit; // Depth limit for alpha-beta pruning
-    private boolean blackWins = false;
-    private boolean whiteWins = false;
-
 
     public NegaMaxBot(boolean isBlack, int[][] board, int depthLimit) {
         super(isBlack, board);
@@ -17,7 +14,27 @@ public class NegaMaxBot extends Bot {
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
         BotLogic botLogic = new BotLogic(isBlack);
-        Move bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1, botLogic);
+        Move bestMove = null;
+        List<Move> moves = botLogic.getAllPossibleMoves(board, boardScreen, true);
+        moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
+
+        System.out.println("this is the number of moves " + moves.size());
+        if(moves.size() == 1){
+            bestMove = moves.get(0);
+            System.out.println("one");
+        }
+        else if (moves.get(0).isAttackMove) {
+            moves.removeIf(move -> !move.isAttackMove);
+            if(moves.size()==1){
+                bestMove = moves.get(0);
+                System.out.println("short cut");
+                System.out.println("two");
+            }
+        }else{
+            bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1, botLogic);
+            System.out.println("three");
+        }
+        System.out.println("mmm");
         System.out.println("best move " + bestMove.startRow + " " + bestMove.startCol + " to " + bestMove.endRow + " " + bestMove.endCol + " " + bestMove.evaluation);
 
         if (bestMove != null) {
@@ -30,22 +47,21 @@ public class NegaMaxBot extends Bot {
         }
     }
     private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max, BotLogic botLogic) {
-        if (depth == 0 || botLogic.isGameOver(board,boardScreen,max,blackWins,whiteWins)) {
+        if (depth == 0 || botLogic.isGameOver(board,boardScreen,max)) {
             int evaluation;
-            if((blackWins && isBlack) || (whiteWins && !isBlack)){
+            if((botLogic.didBlackWin() && isBlack) || (botLogic.didWhiteWin() && !isBlack)){
                 evaluation = 10000;
-            } else if ((blackWins && !isBlack) || (whiteWins && isBlack)) {
+            } else if ((botLogic.didBlackWin() && !isBlack) || (botLogic.didWhiteWin() && isBlack)) {
                 evaluation = -10000;
             }else {
                 evaluation = botLogic.evaluateBoard(board); // Evaluate the board at the leaf node
             }
-            blackWins = false;
-            whiteWins = false;
+            botLogic.setWinsToFalse();
 
             return new Move(-1,-1,-1,-1,false,max * evaluation); // Return the evaluation wrapped in a Move object
         }
 
-        List<Move> moves = botLogic.getAllPossibleMoves(boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
+        List<Move> moves = botLogic.getAllPossibleMoves(board,boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
         moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
 
         if (moves.get(0).isAttackMove) {

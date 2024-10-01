@@ -5,6 +5,8 @@ import java.util.List;
 
 public class BotLogic {
     private boolean isBlack;
+    private boolean blackWins = false;
+    private boolean whiteWins = false;
     private int [][] board;
     public BotLogic(boolean isBlack){
         this.isBlack = isBlack;
@@ -15,7 +17,7 @@ public class BotLogic {
         int score = 0;
 
         // Weights for each component of the evaluation function
-        int distanceWeight = 4;
+        int distanceWeight = 2;
         int pieceValue = 30;
 
         for (int row = 0; row < board.length; row++) {
@@ -82,7 +84,8 @@ public class BotLogic {
         board[move.startRow][move.startCol] = board[move.endRow][move.endCol];
         board[move.endRow][move.endCol] = 0;
     }
-    public List<Move> getAllPossibleMoves(BoardScreen boardScreen, boolean maximization){
+    public List<Move> getAllPossibleMoves(int [][] board, BoardScreen boardScreen, boolean maximization){
+        this.board = board;
         List<Move> moves = new ArrayList<>();
         if(maximization){ // Bot moves
             if(isBlack){
@@ -161,19 +164,19 @@ public class BotLogic {
         }
     }
     // Method to check if the game is over
-    protected boolean isGameOver(int[][] board, BoardScreen boardScreen, int max, boolean blackWins, boolean whiteWins) {
+    protected boolean isGameOver(int[][] board, BoardScreen boardScreen, int max) {
         this.board = board;
         // Check if a black stone has reached row 0 (top)
         for (int i = 0; i < board[0].length; i++) {
             if (board[0][i] == 2) {
-                blackWins = true;
+                this.blackWins = true;
                 return true;
             }
         }
         // Check if a white stone has reached row 8 (bottom)
         for (int i = 0; i < board[8].length; i++) {
             if (board[8][i] == 1) {
-                whiteWins = true;
+                this.whiteWins = true;
                 return true;
             }
         }
@@ -191,22 +194,32 @@ public class BotLogic {
             }
         }
         if(countW==0){
-            blackWins = true;
+            this.blackWins = true;
             return true;
         } else if (countB==0) {
-            whiteWins = true;
+            this.whiteWins = true;
             return true;
         }
-        List<Move> moves = getAllPossibleMoves(boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
+        List<Move> moves = getAllPossibleMoves(board, boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
         if(moves.isEmpty()){
             if((max==1 && isBlack) || (max==-1 && !isBlack)){
-                whiteWins=true;
+                this.whiteWins=true;
             }else{
-                blackWins=true;
+                this.blackWins=true;
             }
             return true;
         }
 
         return false;
+    }
+    public boolean didBlackWin(){
+        return blackWins;
+    }
+    public boolean didWhiteWin(){
+        return whiteWins;
+    }
+    public void setWinsToFalse(){
+        blackWins = false;
+        whiteWins = false;
     }
 }
