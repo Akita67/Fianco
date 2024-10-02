@@ -209,7 +209,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot2 = new NegaMaxBot(true,board,6);
+                    bot2 = new NegaMaxBot(true,board,3);
                     break;
                 }
                 case 3:{
@@ -412,6 +412,12 @@ public class BoardScreen extends InputAdapter implements Screen {
         isBlackTurn = !isBlackTurn;
         flag = false;
         movesToNull();
+    }
+    protected void cantMove(boolean isBlack){
+        if(isBlack){
+            gameLogic.setBlackStuck();
+        }else
+            gameLogic.setWhiteStuck();
     }
     protected boolean checkForCaptures(int [][]board, boolean player1) {
         //When a player is on the wall the other player needs to attack is a bug

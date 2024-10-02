@@ -1,13 +1,15 @@
 package io.github.fianco;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class BotLogic {
     private boolean isBlack;
     private boolean blackWins = false;
     private boolean whiteWins = false;
+    private boolean draw = false;
     private int [][] board;
+    private List <int [][]> repeatedMoves = new ArrayList<>();
+    private int totalPieces;
     public BotLogic(boolean isBlack){
         this.isBlack = isBlack;
     }
@@ -189,8 +191,6 @@ public class BotLogic {
                     countW++;
                 else if(board[i][j] == 2)
                     countB++;
-                else if(countW!=0 && countB!=0)
-                    break;
             }
         }
         if(countW==0){
@@ -200,6 +200,17 @@ public class BotLogic {
             this.whiteWins = true;
             return true;
         }
+        if(totalPieces == 0){
+            totalPieces = countB+countW;
+        }
+        else if(totalPieces != countB + countW){
+            repeatedMoves = new ArrayList<>();
+            totalPieces = countB + countW;
+        }else{
+            repeatedMoves.add(board);
+        }
+        hasThreeRepeatedStates();
+
         List<Move> moves = getAllPossibleMoves(board, boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
         if(moves.isEmpty()){
             if((max==1 && isBlack) || (max==-1 && !isBlack)){
@@ -212,14 +223,36 @@ public class BotLogic {
 
         return false;
     }
+    public void hasThreeRepeatedStates() {
+        Map<String, Integer> stateCount = new HashMap<>();
+
+        for (int[][] board : repeatedMoves) {
+            String boardString = Arrays.deepToString(board);
+            stateCount.put(boardString, stateCount.getOrDefault(boardString, 0) + 1);
+
+            if (stateCount.get(boardString) == 3) {
+                draw = true;
+                System.out.println("Threefold repetition detected");
+                break;
+            }
+        }
+    }
+
     public boolean didBlackWin(){
         return blackWins;
     }
     public boolean didWhiteWin(){
         return whiteWins;
     }
+    public boolean isDraw(){return draw;}
     public void setWinsToFalse(){
         blackWins = false;
         whiteWins = false;
+        draw = false;
+    }
+    public void popLatestBoard(){
+        if(!repeatedMoves.isEmpty()){
+            repeatedMoves.remove(repeatedMoves.size()-1);
+        }
     }
 }

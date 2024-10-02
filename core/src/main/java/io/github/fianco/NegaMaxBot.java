@@ -18,23 +18,19 @@ public class NegaMaxBot extends Bot {
         List<Move> moves = botLogic.getAllPossibleMoves(board, boardScreen, true);
         moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
 
-        System.out.println("this is the number of moves " + moves.size());
         if(moves.size() == 1){
             bestMove = moves.get(0);
-            System.out.println("one");
         }
         else if (moves.get(0).isAttackMove) {
             moves.removeIf(move -> !move.isAttackMove);
             if(moves.size()==1){
                 bestMove = moves.get(0);
-                System.out.println("short cut");
-                System.out.println("two");
+            }else{
+                bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1, botLogic);
             }
         }else{
             bestMove = negamax(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, 1, botLogic);
-            System.out.println("three");
         }
-        System.out.println("mmm");
         System.out.println("best move " + bestMove.startRow + " " + bestMove.startCol + " to " + bestMove.endRow + " " + bestMove.endCol + " " + bestMove.evaluation);
 
         if (bestMove != null) {
@@ -44,6 +40,8 @@ public class NegaMaxBot extends Bot {
             } else {
                 boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
             }
+        }else{
+            boardScreen.cantMove(this.isBlack);
         }
     }
     private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max, BotLogic botLogic) {
@@ -53,7 +51,10 @@ public class NegaMaxBot extends Bot {
                 evaluation = 10000;
             } else if ((botLogic.didBlackWin() && !isBlack) || (botLogic.didWhiteWin() && isBlack)) {
                 evaluation = -10000;
-            }else {
+            } else if(botLogic.isDraw()){
+                evaluation = 0;
+            }
+            else {
                 evaluation = botLogic.evaluateBoard(board); // Evaluate the board at the leaf node
             }
             botLogic.setWinsToFalse();
@@ -75,7 +76,7 @@ public class NegaMaxBot extends Bot {
             botLogic.makeMove(board, move, isBlack && max == 1 || !isBlack && max == -1); // if true move is black, else white
 
             Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -max, botLogic); // Negate alpha, beta, and color
-
+            botLogic.popLatestBoard();
             if (-resultMove.evaluation > maxEval) {
                 maxEval = -resultMove.evaluation;
                 bestMove = move.clone();
@@ -84,6 +85,7 @@ public class NegaMaxBot extends Bot {
 
             // Undo the move
             botLogic.undoMove(board, move, isBlack && max == 1 || !isBlack && max == -1);
+            botLogic.popLatestBoard();
 
             alpha = Math.max(alpha, maxEval);
             if (alpha >= beta) {

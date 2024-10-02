@@ -5,12 +5,18 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import java.util.List;
+
 public class GameLogic {
     private final Main game;
     private int[][] board;
     public BitmapFont font;
     private boolean blackWins = false;  // Track if black has won
     private boolean whiteWins = false;  // Track if white has won
+    private boolean whiteStuck = false;
+    private boolean blackStuck = false;
+
+    private boolean draw = false;
     private GlyphLayout layout;
     BoardScreen boardScreen;
 
@@ -28,9 +34,7 @@ public class GameLogic {
     public void winCondition(BoardScreen boardScreen, int[][] board, SpriteBatch batch, Bot bot1, Bot bot2,boolean ai1, boolean ai2){
         this.board = board;
 
-        // TODO need to implement a function so that when we can't move any pieces anymore that player loses
         // TODO when the 3 last boardhistory are the same then we have a draw
-        //
 
         // Check if a black stone has reached row 0 (top)
         for (int i = 0; i < board[0].length; i++) {
@@ -66,27 +70,29 @@ public class GameLogic {
         } else if (countB==0) {
             whiteWins = true;
         }
+        if(blackStuck){
+            whiteWins = true;
+        } else if(whiteStuck){
+            blackWins = true;
+        }
+
 
         // Render win message if a player has won
-
-        if (blackWins) {
-            if(boardScreen.isPlayer1White)
-                boardScreen.addPlayer2Score();
-            else
+        if(blackWins || whiteWins || draw){
+            if (blackWins) {
+                if(boardScreen.isPlayer1White)
+                    boardScreen.addPlayer2Score();
+                else
+                    boardScreen.addPlayer1Score();
+            } else if (whiteWins) {
+                if(boardScreen.isPlayer1White)
+                    boardScreen.addPlayer1Score();
+                else
+                    boardScreen.addPlayer2Score();
+            } else if(draw){
                 boardScreen.addPlayer1Score();
-            resetBoard();
-            boardScreen.resetGrid();
-            boardScreen.changePlayer1Side();
-            boardScreen.clearHistory();
-            if(ai1)
-                bot1.changeSide();
-            if (ai2)
-                bot2.changeSide();
-        } else if (whiteWins) {
-            if(boardScreen.isPlayer1White)
-                boardScreen.addPlayer1Score();
-            else
                 boardScreen.addPlayer2Score();
+            }
             resetBoard();
             boardScreen.resetGrid();
             boardScreen.changePlayer1Side();
@@ -117,12 +123,23 @@ public class GameLogic {
         // Reset the win conditions
         blackWins = false;
         whiteWins = false;
+        whiteStuck = false;
+        blackStuck = false;
+    }
+    public void setWhiteStuck(){
+        this.whiteStuck = true;
+    }
+    public void setBlackStuck(){
+        this.blackStuck = true;
     }
     public void finished(int num1, int num2){
-        if(num1>=2){
+        if(num1+num2 == 4){
+            game.setScreen(new CongratulationsScreen("The game is a draw"));
+        }
+        else if(num1==2){
             game.setScreen(new CongratulationsScreen("Congratulations! Player 1 won the game!"));
         }
-        else if(num2>=2){
+        else if(num2==2){
             game.setScreen(new CongratulationsScreen("Congratulations! Player 2 won the game!"));
         }
     }
