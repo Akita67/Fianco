@@ -6,10 +6,8 @@ public class BotLogic {
     private boolean isBlack;
     private boolean blackWins = false;
     private boolean whiteWins = false;
-    private boolean draw = false;
     private int [][] board;
-    private List <int [][]> repeatedMoves = new ArrayList<>();
-    private int totalPieces;
+
     public BotLogic(boolean isBlack){
         this.isBlack = isBlack;
     }
@@ -19,18 +17,18 @@ public class BotLogic {
         int score = 0;
 
         // Weights for each component of the evaluation function
-        int distanceWeight = 2;
-        int pieceValue = 30;
+        int distanceWeight = 1;
+        int pieceValue = 10;
 
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
-                if (isBotPiece(row, col)) {
+                if (isBotPiece(row, col, board)) {
                     if(isBlack)
                         score += pieceValue + distanceWeight * (7 - row); // Example add: + (7 - row);
                     else
                         score += pieceValue + distanceWeight * row;
 
-                } else if (isOpponentPiece(row, col)) {
+                } else if (isOpponentPiece(row, col, board)) {
                     if(!isBlack)
                         score -= (pieceValue + distanceWeight * (7 - row)); // Example add: + row;
                     else
@@ -42,15 +40,16 @@ public class BotLogic {
     }
 
     // Check if the stone belongs to the bot
-    private boolean isBotPiece(int row, int col) {
+    private boolean isBotPiece(int row, int col, int[][]board) {
         return (isBlack && board[row][col] == 2) || (!isBlack && board[row][col] == 1);
     }
 
     // Check if the stone belongs to the opponent
-    private boolean isOpponentPiece(int row, int col) {
+    private boolean isOpponentPiece(int row, int col, int[][]board) {
         return (!isBlack && board[row][col] == 2) || (isBlack && board[row][col] == 1);
     }
     public void makeMove(int[][] board, Move move, boolean isBlack){
+        this.board = board;
         if(move.isAttackMove()){
             if(isBlack){
                 if(move.endCol>move.startCol)// Black attack to the right
@@ -69,6 +68,7 @@ public class BotLogic {
         board[move.startRow][move.startCol] = 0;
     }
     public void undoMove(int[][] board, Move move, boolean isBlacky){
+        this.board = board;
         if(move.isAttackMove()){
             if(isBlacky){
                 if(move.endCol>move.startCol)// Black attacked to the right
@@ -94,7 +94,7 @@ public class BotLogic {
                 for (int row = 0; row < boardScreen.gridSize; row++) {
                     for (int col = 0; col < boardScreen.gridSize; col++) {
                         // Get all valid moves for this piece
-                        if (isBotPiece(row, col)) {
+                        if (isBotPiece(row, col, board)) {
                             List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
                             moves.addAll(pieceMoves); // Add to the list of moves
                         }
@@ -104,7 +104,7 @@ public class BotLogic {
                 for (int row = 8; row >= 0; row--) {
                     for (int col = 0; col < boardScreen.gridSize; col++) {
                         // Get all valid moves for this piece
-                        if (isBotPiece(row, col)) {
+                        if (isBotPiece(row, col, board)) {
                             List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, isBlack);
                             moves.addAll(pieceMoves); // Add to the list of moves
                         }
@@ -116,7 +116,7 @@ public class BotLogic {
                 for (int row = 0; row < boardScreen.gridSize; row++) {
                     for (int col = 0; col < boardScreen.gridSize; col++) {
                         // Get all valid moves for this piece
-                        if (isOpponentPiece(row, col)){
+                        if (isOpponentPiece(row, col, board)){
                             List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
                             moves.addAll(pieceMoves); // Add to the list of moves
                         }
@@ -126,7 +126,7 @@ public class BotLogic {
                 for (int row = 8; row >= 0; row--) {
                     for (int col = 0; col < boardScreen.gridSize; col++) {
                         // Get all valid moves for this piece
-                        if (isOpponentPiece(row, col)) {
+                        if (isOpponentPiece(row, col, board)) {
                             List<Move> pieceMoves = getValidMovesForPiece(boardScreen, row, col, !isBlack);
                             moves.addAll(pieceMoves); // Add to the list of moves
                         }
@@ -191,6 +191,9 @@ public class BotLogic {
                     countW++;
                 else if(board[i][j] == 2)
                     countB++;
+                else if (countB!=0 && countW!=0) {
+                    break;
+                }
             }
         }
         if(countW==0){
@@ -200,17 +203,6 @@ public class BotLogic {
             this.whiteWins = true;
             return true;
         }
-        if(totalPieces == 0){
-            totalPieces = countB+countW;
-        }
-        else if(totalPieces != countB + countW){
-            repeatedMoves = new ArrayList<>();
-            totalPieces = countB + countW;
-        }else{
-            repeatedMoves.add(board);
-        }
-        hasThreeRepeatedStates();
-
         List<Move> moves = getAllPossibleMoves(board, boardScreen, max == 1); // Color == 1 for current player, -1 for opponent
         if(moves.isEmpty()){
             if((max==1 && isBlack) || (max==-1 && !isBlack)){
@@ -223,20 +215,6 @@ public class BotLogic {
 
         return false;
     }
-    public void hasThreeRepeatedStates() {
-        Map<String, Integer> stateCount = new HashMap<>();
-
-        for (int[][] board : repeatedMoves) {
-            String boardString = Arrays.deepToString(board);
-            stateCount.put(boardString, stateCount.getOrDefault(boardString, 0) + 1);
-
-            if (stateCount.get(boardString) == 3) {
-                draw = true;
-                System.out.println("Threefold repetition detected");
-                break;
-            }
-        }
-    }
 
     public boolean didBlackWin(){
         return blackWins;
@@ -244,15 +222,8 @@ public class BotLogic {
     public boolean didWhiteWin(){
         return whiteWins;
     }
-    public boolean isDraw(){return draw;}
     public void setWinsToFalse(){
         blackWins = false;
         whiteWins = false;
-        draw = false;
-    }
-    public void popLatestBoard(){
-        if(!repeatedMoves.isEmpty()){
-            repeatedMoves.remove(repeatedMoves.size()-1);
-        }
     }
 }

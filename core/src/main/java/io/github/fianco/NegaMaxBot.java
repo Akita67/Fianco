@@ -1,6 +1,5 @@
 package io.github.fianco;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class NegaMaxBot extends Bot {
@@ -51,8 +50,6 @@ public class NegaMaxBot extends Bot {
                 evaluation = 10000;
             } else if ((botLogic.didBlackWin() && !isBlack) || (botLogic.didWhiteWin() && isBlack)) {
                 evaluation = -10000;
-            } else if(botLogic.isDraw()){
-                evaluation = 0;
             }
             else {
                 evaluation = botLogic.evaluateBoard(board); // Evaluate the board at the leaf node
@@ -76,7 +73,6 @@ public class NegaMaxBot extends Bot {
             botLogic.makeMove(board, move, isBlack && max == 1 || !isBlack && max == -1); // if true move is black, else white
 
             Move resultMove = negamax(boardScreen, board, depth - 1, -beta, -alpha, -max, botLogic); // Negate alpha, beta, and color
-            botLogic.popLatestBoard();
             if (-resultMove.evaluation > maxEval) {
                 maxEval = -resultMove.evaluation;
                 bestMove = move.clone();
@@ -85,7 +81,6 @@ public class NegaMaxBot extends Bot {
 
             // Undo the move
             botLogic.undoMove(board, move, isBlack && max == 1 || !isBlack && max == -1);
-            botLogic.popLatestBoard();
 
             alpha = Math.max(alpha, maxEval);
             if (alpha >= beta) {
