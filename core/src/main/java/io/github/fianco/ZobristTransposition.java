@@ -111,8 +111,8 @@ public class ZobristTransposition implements Serializable {
     }
 
     // Store the evaluation and move in the transposition table
-    public void storeEntryInTranspositionTable(int evaluation, boolean isAttack, int startRow, int startCol, int endRow, int endCol) {
-        TranspositionEntry entry = new TranspositionEntry(evaluation, isAttack, startRow, startCol, endRow, endCol);
+    public void storeEntryInTranspositionTable(int evaluation, boolean isAttack, int startRow, int startCol, int endRow, int endCol, int depth, int flag) {
+        TranspositionEntry entry = new TranspositionEntry(evaluation, isAttack, startRow, startCol, endRow, endCol, depth, flag);
         transpositionTable.put(zobristHash, entry);
     }
 

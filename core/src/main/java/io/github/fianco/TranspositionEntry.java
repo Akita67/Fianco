@@ -9,14 +9,18 @@ public class TranspositionEntry implements Serializable {
     private int startCol;
     private int endRow;
     private int endCol;
+    private int depth;
+    private int flag; // 0 = exact, 1 = lower bound, 2 = upper bound
 
-    public TranspositionEntry(int evaluation, boolean isAttack, int startRow, int startCol, int endRow, int endCol) {
+    public TranspositionEntry(int evaluation, boolean isAttack, int startRow, int startCol, int endRow, int endCol, int depth, int flag) {
         this.evaluation = evaluation;
         this.isAttack = isAttack;
         this.startRow = startRow;
         this.startCol = startCol;
         this.endRow = endRow;
         this.endCol = endCol;
+        this.depth = depth;
+        this.flag = flag;
     }
 
     public int getEvaluation() {
@@ -40,6 +44,8 @@ public class TranspositionEntry implements Serializable {
     public int getEndCol() {
         return endCol;
     }
+    public int getDepth(){return depth;}
+    public int getFlag(){return flag;}
 
     @Override
     public String toString() {

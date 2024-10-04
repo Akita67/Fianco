@@ -33,12 +33,12 @@ public class BVBSelectionScreen implements Screen {
         this.ai2 = ai2;
 
         bots1 = new SelectBox<String>(menuSkin);
-        bots1.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "Iterative Deepening", "NegaMaxBotTT");
+        bots1.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "Iterative Deepening", "AlphaBetaBotTT");
         bots1.setPosition(400, 350);
         bots1.setSize(200, 50);
 
         bots2 = new SelectBox<String>(menuSkin);
-        bots2.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "Iterative Deepening", "NegaMaxBot");
+        bots2.setItems("Random bot", "Alpha Beta", "NegaMaxBot", "MCTS", "Iterative Deepening", "AlphaBetaBotTT");
         bots2.setPosition(700, 350);
         bots2.setSize(200, 50);
 

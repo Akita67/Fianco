@@ -192,7 +192,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 5:{
-                    bot1 = new NegaMaxBotTT(false,board,6);
+                    bot1 = new AlphaBetaBotTT(false,board,6);
                     break;
                 }
             }
@@ -221,7 +221,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 5:{
-                    bot2 = new NegaMaxBotTT(true,board,6);
+                    bot2 = new AlphaBetaBotTT(true,board,6);
                     break;
                 }
             }
