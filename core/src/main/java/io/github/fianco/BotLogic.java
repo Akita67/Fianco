@@ -38,6 +38,34 @@ public class BotLogic {
         }
         return score;
     }
+    protected int evaluateBoard2(int[][] board) {
+        this.board = board;
+        int score = 0;
+
+        // Define constants for weights
+        int DISTANCE_WEIGHT = 1;   // Weight for how far a piece is from the opponent's row
+        int PIECE_COUNT_WEIGHT = 10; // Weight for the number of pieces remaining
+        int KEY_POSITION_WEIGHT = 2;  // Weight for controlling key positions (e.g. middle of the board)
+
+
+        for (int row = 0; row < board.length; row++) {
+            for (int col = 0; col < board[row].length; col++) {
+                if (isBotPiece(row, col, board)) {
+                    if(isBlack)
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row) + KEY_POSITION_WEIGHT * Math.abs(col-4); // Example add: + (7 - row);
+                    else
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row + KEY_POSITION_WEIGHT * Math.abs(col-4);
+
+                } else if (isOpponentPiece(row, col, board)) {
+                    if(!isBlack)
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row) + KEY_POSITION_WEIGHT * Math.abs(col-4)); // Example add: + row;
+                    else
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row + KEY_POSITION_WEIGHT * Math.abs(col-4));
+                }
+            }
+        }
+        return score;
+    }
 
     // Check if the stone belongs to the bot
     private boolean isBotPiece(int row, int col, int[][]board) {
@@ -66,6 +94,58 @@ public class BotLogic {
         }
         board[move.endRow][move.endCol] = board[move.startRow][move.startCol];
         board[move.startRow][move.startCol] = 0;
+    }
+    public int[][] makeMoveInt(int[][] board, Move move, boolean isBlacky){
+        //System.out.println(move.startRow + " " + move.startCol + " " + move.endRow + " " + move.endCol);
+        int [][] newboard = deepCopyBoard(board);
+        if(move.isAttackMove()){
+            if(isBlacky){
+                if(move.endCol>move.startCol){// Black attack to the right
+                    newboard[move.startRow-1][move.startCol+1] = 0;}
+                else{ // Black attack to the left
+                    newboard[move.startRow-1][move.startCol-1] = 0;}
+            }else{
+                if(move.endCol>move.startCol){// White attack to the right
+                    newboard[move.startRow+1][move.startCol+1] = 0;}
+                else{ // White attack to the left
+                    newboard[move.startRow+1][move.startCol-1] = 0;}
+            }
+
+        }
+        newboard[move.endRow][move.endCol] = newboard[move.startRow][move.startCol];
+        newboard[move.startRow][move.startCol] = 0;
+        return newboard;
+    }
+    public Move getBestMoveUsingEvaluation(int[][] board, MCS.EvaluationFunction evalFunc) {
+        // Get all possible moves for the current player (isBlack)
+        List<Move> possibleMoves = getAllPossibleMoves(board, null, isBlack);
+
+        // If no moves are possible, return null
+        if (possibleMoves.isEmpty()) {
+            return null;
+        }
+
+        // Initialize the best move and best score
+        Move bestMove = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+
+        // Iterate through all possible moves
+        for (Move move : possibleMoves) {
+            // Create a copy of the board and apply the move
+            int[][] newBoard = makeMoveInt(board, move, isBlack);
+
+            // Evaluate the new board position using the evaluation function
+            double score = evalFunc.evaluate(newBoard);
+
+            // If the current score is better than the best score, update the best move
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+
+        // Return the move with the highest evaluation score
+        return bestMove;
     }
     public void undoMove(int[][] board, Move move, boolean isBlacky){
         this.board = board;
@@ -214,6 +294,13 @@ public class BotLogic {
         }
 
         return false;
+    }
+    public int[][] deepCopyBoard(int[][] originalBoard) {
+        int[][] copy = new int[originalBoard.length][originalBoard[0].length];
+        for (int i = 0; i < originalBoard.length; i++) {
+            System.arraycopy(originalBoard[i], 0, copy[i], 0, originalBoard[i].length);
+        }
+        return copy;
     }
 
     public boolean didBlackWin(){

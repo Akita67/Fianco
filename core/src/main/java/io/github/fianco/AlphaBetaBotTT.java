@@ -12,23 +12,44 @@ public class AlphaBetaBotTT extends Bot {
         super(isBlack, board);
         this.depthLimit = depthLimit; // Set the maximum depth for the search
         this.zobristTransposition = new ZobristTransposition(); // Initialize ZobristTransposition
+        this.zobristTransposition.resetTranspositionTable();
         this.zobristTransposition.computeZobristHash(board); // Compute initial Zobrist hash for the current board
     }
 
     // Main method for the bot to make its move
     public void calculate(BoardScreen boardScreen, int[][] board) {
+        this.zobristTransposition.computeZobristHash(board);
         BotLogic botLogic = new BotLogic(isBlack);
-        loadTranspositionTable("transposition_table.ser");
-        Move bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true,botLogic);
+        Move bestMove = null;
+        List<Move> moves = botLogic.getAllPossibleMoves(board, boardScreen, true);
+        moves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
+
+        if(moves.size() == 1){
+            bestMove = moves.get(0);
+        }
+        else if (moves.get(0).isAttackMove) {
+            moves.removeIf(move -> !move.isAttackMove);
+            if(moves.size()==1){
+                bestMove = moves.get(0);
+            }else{
+                loadTranspositionTable("transposition_table.ser");
+                bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true, botLogic);
+            }
+        }else{
+            loadTranspositionTable("transposition_table.ser");
+            bestMove = alphaBeta(boardScreen, board, depthLimit, Integer.MIN_VALUE, Integer.MAX_VALUE, true, botLogic);
+        }
+        System.out.println("best move " + bestMove.startRow + " " + bestMove.startCol + " to " + bestMove.endRow + " " + bestMove.endCol + " " + bestMove.evaluation);
+
 
         if (bestMove != null) {
             // Execute the move
             if (bestMove.isAttackMove) {
                 boardScreen.botAttackStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
-                zobristTransposition.updateZobristHashForAttack(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
+                //zobristTransposition.updateZobristHashForAttack(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
             } else {
                 boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
-                zobristTransposition.updateZobristHash(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
+                //zobristTransposition.updateZobristHash(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
             }
             System.out.println(bestMove.evaluation);
         }
@@ -36,9 +57,10 @@ public class AlphaBetaBotTT extends Bot {
     }
     // Alpha-Beta pruning algorithm to find the best move
     private Move alphaBeta(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, boolean maximizingPlayer, BotLogic botLogic) {
-        if (zobristTransposition.isInTranspositionTable() && zobristTransposition.getEntryFromTranspositionTable().getDepth() >= depth) {
-            System.out.println("this is the depth " + depth);
+        if (zobristTransposition.isInTranspositionTable()) { // && zobristTransposition.getEntryFromTranspositionTable().getDepth() >= depth
+            //System.out.println("this is the depth " + depth);
             TranspositionEntry entry = zobristTransposition.getEntryFromTranspositionTable();
+            //System.out.println("this is evaluation " + entry.getEvaluation());
             return new Move(entry.getStartRow(), entry.getStartCol(), entry.getEndRow(), entry.getEndCol(), entry.isAttack(), entry.getEvaluation());
         }
 
@@ -76,7 +98,7 @@ public class AlphaBetaBotTT extends Bot {
                     zobristTransposition.updateZobristHash(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
 
                 Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, false, botLogic);
-
+                zobristTransposition.storeEntryInTranspositionTable(resultMove.evaluation, move.isAttackMove, move.startRow, move.startCol, move.endRow, move.endCol, depth, flag);
                 if (resultMove.evaluation > maxEval) {
                     maxEval = resultMove.evaluation;
                     bestMove = move;
@@ -89,6 +111,7 @@ public class AlphaBetaBotTT extends Bot {
                     zobristTransposition.undoZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol, board[move.endRow][move.endCol]);
                 else
                     zobristTransposition.updateZobristHash(move.endRow, move.endCol, move.startRow, move.startCol, board[move.endRow][move.endCol]);
+
 
                 alpha = Math.max(alpha, resultMove.evaluation);
                 if (beta <= alpha) {
@@ -109,6 +132,7 @@ public class AlphaBetaBotTT extends Bot {
                     zobristTransposition.updateZobristHash(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
 
                 Move resultMove = alphaBeta(boardScreen, board, depth - 1, alpha, beta, true, botLogic);
+                zobristTransposition.storeEntryInTranspositionTable(resultMove.evaluation, move.isAttackMove, move.startRow, move.startCol, move.endRow, move.endCol, depth, flag);
 
                 if (resultMove.evaluation < minEval) {
                     minEval = resultMove.evaluation;
@@ -130,7 +154,6 @@ public class AlphaBetaBotTT extends Bot {
                 }
             }
         }
-        zobristTransposition.storeEntryInTranspositionTable(bestMove.evaluation, bestMove.isAttackMove, bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol, depth, flag);
         flag = 0;
         return bestMove;
     }

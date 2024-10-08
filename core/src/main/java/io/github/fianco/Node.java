@@ -33,7 +33,7 @@ public class Node {
 
     public int getResult() {
         // Add your logic to determine result of the game at this node (win/loss)
-        return 0;
+        return wins;
     }
 
     public Node getBestUCTChild() {

@@ -1,24 +1,27 @@
 package io.github.fianco;
 
+import java.util.concurrent.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class MTCS extends Bot{
+public class MTCS extends Bot {
     private Random random;
     private List<Move> possibleMoves;
     private List<Move> possibleAttack;
     private int iterations;  // Number of iterations to run MCTS
     private boolean blackWins = false;
     private boolean whiteWins = false;
+    private int numThreads;  // Number of threads for parallelism
 
-    public MTCS(boolean isBlack, int[][] board, int iterations){
+    public MTCS(boolean isBlack, int[][] board, int iterations, int numThreads) {
         super(isBlack, board);
         this.iterations = iterations;
+        this.numThreads = numThreads;
         random = new Random();
     }
 
-    public void calculate(BoardScreen boardScreen, int[][] board){
+    public void calculate(BoardScreen boardScreen, int[][] board) {
         possibleAttack = new ArrayList<>();
 
         // Run the MCTS to determine the best move
@@ -42,12 +45,11 @@ public class MTCS extends Bot{
         for (int i = 0; i < iterations; i++) {
             Node selectedNode = selection(rootNode);
             if (!selectedNode.isTerminal()) {
-                Node expandedNode = expansion(selectedNode,boardScreen);
-                if (expandedNode == null) {
-                    continue;  // No valid expansion possible, skip to next iteration
+                Node expandedNode = expansion(selectedNode, boardScreen);
+                if (expandedNode != null) {
+                    // Run the simulation in parallel
+                    runParallelSimulations(expandedNode, boardScreen);
                 }
-                int simulationResult = simulation(expandedNode,boardScreen);
-                backpropagation(expandedNode, simulationResult);
             } else {
                 backpropagation(selectedNode, selectedNode.getResult());
             }
@@ -56,35 +58,56 @@ public class MTCS extends Bot{
         // Choose the child with the highest visit count
         return rootNode.getBestChild().move;
     }
+
     private Node selection(Node node) {
         while (!node.isLeaf()) {
             node = node.getBestUCTChild();
         }
         return node;
     }
+
     private Node expansion(Node node, BoardScreen boardScreen) {
         List<Move> possibleMoves = getAllPossibleMoves(boardScreen, node.board, node.isBlackNode);
         if (possibleMoves.isEmpty()) {
             return null;  // No valid expansion possible
         }
-        /*
-        for(Move move : possibleMoves){
-            System.out.println(move.startRow + " " + move.startCol);
-        }
-        System.out.println();
 
-         */
         possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
-        if(possibleMoves.get(0).isAttackMove){
+        if (possibleMoves.get(0).isAttackMove) {
             // remove all the moves with isAttackMove false
             possibleMoves.removeIf(move -> !move.isAttackMove);
         }
         for (Move move : possibleMoves) {
-            int[][] newBoard = makeMove(node.board, move, node.isBlackNode); // Simulate the move
+            int[][] newBoard = makeMove(node.board, move, node.isBlackNode);  // Simulate the move
             node.addChild(new Node(node, newBoard, move, !node.isBlackNode));
         }
         return node.getRandomChild();
     }
+
+    // This method runs simulations in parallel
+    private void runParallelSimulations(Node expandedNode, BoardScreen boardScreen) {
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+        List<Future<Integer>> futures = new ArrayList<>();
+
+        // Submit simulations to run in parallel
+        for (int i = 0; i < numThreads; i++) {
+            Future<Integer> future = executor.submit(() -> simulation(expandedNode, boardScreen));
+            futures.add(future);
+        }
+
+        // Collect results and apply backpropagation
+        for (Future<Integer> future : futures) {
+            try {
+                int result = future.get();  // Get the result of the simulation
+                backpropagation(expandedNode, result);  // Run backpropagation after each simulation
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        executor.shutdown();  // Shutdown the executor
+    }
+
     private int simulation(Node node, BoardScreen boardScreen) {
         int[][] simulationBoard = deepCopyBoard(node.board);  // Make a copy of the board
         boolean currentPlayerIsBot = node.isBlackNode;
@@ -97,20 +120,19 @@ public class MTCS extends Bot{
                 break;
             }
             possibleMoves.sort((Move m1, Move m2) -> Boolean.compare(m2.isAttackMove(), m1.isAttackMove()));
-            if(possibleMoves.get(0).isAttackMove){
+            if (possibleMoves.get(0).isAttackMove) {
                 // remove all the moves with isAttackMove false
                 possibleMoves.removeIf(move -> !move.isAttackMove);
             }
             Move randomMove = possibleMoves.get(random.nextInt(possibleMoves.size()));
-            //System.out.println(randomMove.startRow + " " + randomMove.startCol + " " + randomMove.endRow + " " + randomMove.endCol);
             simulationBoard = makeMove(simulationBoard, randomMove, currentPlayerIsBot);
             currentPlayerIsBot = !currentPlayerIsBot;  // Switch turns
         }
 
         // Return the result of the simulation (1 for win, 0 for loss, 0.5 for draw)
-        return getWinner() ? 1 : 0; //TODO makes sometimes killer moves while other are possible
-
+        return getWinner() ? 1 : 0;
     }
+
     private void backpropagation(Node node, int result) {
         while (node != null) {
             node.visits++;
@@ -119,6 +141,7 @@ public class MTCS extends Bot{
             node = node.parent;
         }
     }
+
     private List<Move> getAllPossibleMoves(BoardScreen boardScreen, int[][] currentboard, Boolean isBlackNode) {
         List<Move> moves = new ArrayList<>();
 
@@ -260,5 +283,4 @@ public class MTCS extends Bot{
     public void changeSide(){
         isBlack = !isBlack;
     }
-
 }
