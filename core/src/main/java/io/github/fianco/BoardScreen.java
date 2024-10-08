@@ -188,11 +188,15 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 4:{
-                    bot1 = new IterativeDeepening(false,board,20, 1000, true);
+                    bot1 = new IterativeDeepening(false,board,20, 1000);
                     break;
                 }
                 case 5:{
                     bot1 = new AlphaBetaBotTT(false,board,6);
+                    break;
+                }
+                case 6:{
+                    bot1 = new NegaMaxBotWindow(false,board, 6, 30);
                     break;
                 }
             }
@@ -217,7 +221,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 4:{
-                    bot2 = new IterativeDeepening(true,board,20, 500, false);
+                    bot2 = new IterativeDeepening(true,board,20, 1000);
                     break;
                 }
                 case 5:{
@@ -225,6 +229,10 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 6:{
+                    bot2 = new NegaMaxBotWindow(true,board, 6, 30);
+                    break;
+                }
+                case 7:{
                     bot2 = new MCS(true,board, 100, 8);
                     break;
                 }
