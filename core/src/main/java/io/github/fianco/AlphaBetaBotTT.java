@@ -46,10 +46,8 @@ public class AlphaBetaBotTT extends Bot {
             // Execute the move
             if (bestMove.isAttackMove) {
                 boardScreen.botAttackStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
-                //zobristTransposition.updateZobristHashForAttack(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
             } else {
                 boardScreen.botMoveStone(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol);
-                //zobristTransposition.updateZobristHash(bestMove.startRow, bestMove.startCol, bestMove.endRow, bestMove.endCol,isBlack?2:1);
             }
             System.out.println(bestMove.evaluation);
         }
@@ -108,10 +106,9 @@ public class AlphaBetaBotTT extends Bot {
                 // Undo the move
                 botLogic.undoMove(board, move, isBlack);
                 if(move.isAttackMove)
-                    zobristTransposition.undoZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol, board[move.endRow][move.endCol]);
+                    zobristTransposition.updateZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
                 else
-                    zobristTransposition.updateZobristHash(move.endRow, move.endCol, move.startRow, move.startCol, board[move.endRow][move.endCol]);
-
+                    zobristTransposition.updateZobristHash(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
 
                 alpha = Math.max(alpha, resultMove.evaluation);
                 if (beta <= alpha) {
@@ -143,9 +140,9 @@ public class AlphaBetaBotTT extends Bot {
                 // Undo the move
                 botLogic.undoMove(board, move, !isBlack);
                 if(move.isAttackMove)
-                    zobristTransposition.undoZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
+                    zobristTransposition.updateZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
                 else
-                    zobristTransposition.updateZobristHash(move.endRow, move.endCol, move.startRow, move.startCol, board[move.endRow][move.endCol]);
+                    zobristTransposition.updateZobristHash(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
 
                 beta = Math.min(beta, resultMove.evaluation);
                 if (beta <= alpha) {

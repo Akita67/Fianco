@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class ZobristTransposition implements Serializable {
 
-    private static final int MAX_ENTRIES = 1000000; // number of elements * size of each element => 243 * 4 bytes = 972 bytes
+    private static final int MAX_ENTRIES = 500000; // number of elements * size of each element => 243 * 4 bytes = 972 bytes
     // 1gm ram / 972 bytes = ~1,1 millions
     private int[][][] zobristTable; // Zobrist hashing table
     private long zobristHash; // Current hash for the board
@@ -103,23 +103,6 @@ public class ZobristTransposition implements Serializable {
         // XOR in an empty square where the captured piece was
         zobristHash ^= zobristTable[capturedRow][capturedCol][EMPTY];
     }
-    public void undoZobristHashForAttack(int startRow, int startCol, int endRow, int endCol, int attackingPiece) {
-        // Reverse the regular move portion (same as undoing a regular move)
-        zobristHash ^= zobristTable[endRow][endCol][attackingPiece];
-        zobristHash ^= zobristTable[endRow][endCol][EMPTY];
-
-        zobristHash ^= zobristTable[startRow][startCol][EMPTY];
-        zobristHash ^= zobristTable[startRow][startCol][attackingPiece];
-
-        // Restore the captured piece
-        int capturedRow = (startRow + endRow) / 2; // Midpoint for the captured piece
-        int capturedCol = (startCol + endCol) / 2;
-
-        // XOR in the captured piece at its original position
-        zobristHash ^= zobristTable[capturedRow][capturedCol][EMPTY]; // XOR out the empty
-        zobristHash ^= zobristTable[capturedRow][capturedCol][attackingPiece==WHITE_PIECE?2:1]; // XOR in the captured piece
-    }
-
     // Get the current Zobrist hash
     public long getZobristHash() {
         return zobristHash;
