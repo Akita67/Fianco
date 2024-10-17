@@ -17,24 +17,78 @@ public class BotLogic {
         int score = 0;
 
         // Weights for each component of the evaluation function
-        int distanceWeight = 1;
-        int pieceValue = 10;
+        final int distanceWeight = 1;
+        final int pieceValue = 10;
+        final int columnWeight = 1;
+        final int dangerPenalty = 10; // Penalty for pieces in danger of being captured
+        final int captureBonus = 10; // Bonus for opponent pieces that can be captured
+        final int freedom_moves = 5;
+        int freedom_of_movements = 0;
 
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col, board)) {
-                    if(isBlack)
+                    if(col!=8 && board[row][col+1] == 0){
+                        freedom_of_movements++;
+                    }if(col!=0 && board[row][col-1] == 0){
+                        freedom_of_movements++;
+                    }
+                    if(isBlack) {
+                        if(row!=0 && board[row-1][col] == 0){
+                            freedom_of_movements++;
+                        }
                         score += pieceValue + distanceWeight * (7 - row); // Example add: + (7 - row);
-                    else
+                    }
+                    else{
+                        if(row!=8 && board[row+1][col] == 0){
+                            freedom_of_movements++;
+                        }
                         score += pieceValue + distanceWeight * row;
+                    }
+                    if(col%8 == 0){
+                        score+=columnWeight*2;
+                    }else if(col == 3 || col == 4 || col == 5){
+                        score+=columnWeight;
+                    }
+                    // Penalize if the piece is in danger of being captured
+                    if(row!=0 && row!=board.length-1 && col!=0 && col!=board.length-1)
+                        if (isPieceInDanger(row, col, board))
+                            score -= dangerPenalty;
 
                 } else if (isOpponentPiece(row, col, board)) {
-                    if(!isBlack)
+                    if(col!=8 && board[row][col+1] == 0){
+                        freedom_of_movements--;
+                    }if(col!=0 && board[row][col-1] == 0){
+                        freedom_of_movements--;
+                    }
+                    if(!isBlack) {
+                        if(row!=8 && board[row+1][col] == 0){
+                            freedom_of_movements--;
+                        }
                         score -= (pieceValue + distanceWeight * (7 - row)); // Example add: + row;
-                    else
+                    }
+                    else {
+                        if(row!=0 && board[row-1][col] == 0){
+                            freedom_of_movements--;
+                        }
                         score -= (pieceValue + distanceWeight * row);
+                    }
+                    if(col%8 == 0){
+                        score-=columnWeight*2;
+                    }else if(col == 3 || col == 4 || col == 5){
+                        score-=columnWeight;
+                    }
+                    // Bonus if the opponent's piece is vulnerable to being captured
+                    if(row!=0 && row!=board.length-1 && col!=0 && col!=board.length-1)
+                        if (isPieceInDanger(row, col, board))
+                            score += captureBonus;
                 }
             }
+        }
+        if(freedom_of_movements>0){
+            score += freedom_moves;
+        }else if(freedom_of_movements<0){
+            score -= freedom_moves;
         }
         return score;
     }
@@ -45,22 +99,21 @@ public class BotLogic {
         // Define constants for weights
         int DISTANCE_WEIGHT = 1;   // Weight for how far a piece is from the opponent's row
         int PIECE_COUNT_WEIGHT = 10; // Weight for the number of pieces remaining
-        int KEY_POSITION_WEIGHT = 2;  // Weight for controlling key positions (e.g. middle of the board)
 
 
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col, board)) {
                     if(isBlack)
-                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row) + KEY_POSITION_WEIGHT * Math.abs(col-4); // Example add: + (7 - row);
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row); // Example add: + (7 - row);
                     else
-                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row + KEY_POSITION_WEIGHT * Math.abs(col-4);
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row;
 
                 } else if (isOpponentPiece(row, col, board)) {
                     if(!isBlack)
-                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row) + KEY_POSITION_WEIGHT * Math.abs(col-4)); // Example add: + row;
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row)); // Example add: + row;
                     else
-                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row + KEY_POSITION_WEIGHT * Math.abs(col-4));
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row);
                 }
             }
         }
@@ -75,6 +128,16 @@ public class BotLogic {
     // Check if the stone belongs to the opponent
     private boolean isOpponentPiece(int row, int col, int[][]board) {
         return (!isBlack && board[row][col] == 2) || (isBlack && board[row][col] == 1);
+    }
+    private boolean isPieceInDanger(int row, int col, int[][] board) {
+        if(isBlack){ // bot plays as black
+            if((board[row-1][col-1] == 1 && board[row+1][col+1] == 0) || (board[row-1][col+1] == 1 && board[row+1][col-1] == 0))
+                return true;
+        }else{ // bot plays as white
+            if((board[row+1][col-1] == 2 && board[row-1][col+1] == 0) || (board[row+1][col+1] == 2 && board[row-1][col-1] == 0))
+                return true;
+        }
+        return false;
     }
     public void makeMove(int[][] board, Move move, boolean isBlack){
         this.board = board;

@@ -133,13 +133,13 @@ public class GameLogic {
         this.blackStuck = true;
     }
     public void finished(int num1, int num2){
-        if(num1+num2 == 4){
+        if(num1+num2 == 2){
             game.setScreen(new CongratulationsScreen("The game is a draw"));
         }
-        else if(num1==2){
+        else if(num1==1){
             game.setScreen(new CongratulationsScreen("Congratulations! Player 1 won the game!"));
         }
-        else if(num2==2){
+        else if(num2==1){
             game.setScreen(new CongratulationsScreen("Congratulations! Player 2 won the game!"));
         }
     }

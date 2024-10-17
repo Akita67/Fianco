@@ -34,7 +34,7 @@ public class IterativeDeepening extends Bot {
         long startTime = System.currentTimeMillis();
 
         // Iteratively increase the depth from 1 up to the maximum depth limit
-        for (int currentDepth = 1; currentDepth <= maxDepth; currentDepth++) {
+        for (int currentDepth = 1; currentDepth <= maxDepth; currentDepth+=1) {
             // Check the elapsed time
             long elapsedTime = System.currentTimeMillis() - startTime;
             if (elapsedTime >= timeLimitMillis) {

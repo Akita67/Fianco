@@ -20,7 +20,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import java.util.concurrent.TimeUnit;
 
 public class BoardScreen extends InputAdapter implements Screen {
 
@@ -180,15 +179,15 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 2:{
-                    bot1 = new NegaMaxBot(false,board,6);
+                    bot1 = new NegaMaxBot(false,board,8);
                     break;
                 }
                 case 3:{
-                    bot1 = new MTCS(false,board,160000,8);
+                    bot1 = new MTCS(false,board,100000,8);
                     break;
                 }
                 case 4:{
-                    bot1 = new IterativeDeepening(false,board,20, 1000);
+                    bot1 = new IterativeDeepening(false,board,20, 500);
                     break;
                 }
                 case 5:{
@@ -201,6 +200,10 @@ public class BoardScreen extends InputAdapter implements Screen {
                 }
                 case 7:{
                     bot1 = new NegaMaxBotTT(false,board, 6);
+                    break;
+                }
+                case 8:{
+                    bot1 = new CompetitionBot(false,board,20, 500);
                     break;
                 }
             }
@@ -221,11 +224,11 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 3:{
-                    bot2 = new MTCS(true,board,160000,8);
+                    bot2 = new MTCS(true,board,100000,8);
                     break;
                 }
                 case 4:{
-                    bot2 = new IterativeDeepening(true,board,20, 1000);
+                    bot2 = new IterativeDeepening(true,board,20, 500);
                     break;
                 }
                 case 5:{
@@ -237,7 +240,11 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 7:{
-                    bot2 = new NegaMaxBotTT(true,board, 6);
+                    bot2 = new NegaMaxBotTT(true,board, 10);
+                    break;
+                }
+                case 8:{
+                    bot2 = new CompetitionBot(true,board,10, 500);
                     break;
                 }
             }

@@ -53,7 +53,7 @@ public class NegaMaxBotTT extends Bot {
         saveTranspositionTable("transposition_table.ser");
     }
     private Move negamax(BoardScreen boardScreen, int[][] board, int depth, int alpha, int beta, int max, BotLogic botLogic) {
-        if (zobristTransposition.isInTranspositionTable()) { // && zobristTransposition.getEntryFromTranspositionTable().getDepth() >= depth
+        if (zobristTransposition.isInTranspositionTable() && zobristTransposition.getEntryFromTranspositionTable().getDepth() >= depth) { //
             TranspositionEntry entry = zobristTransposition.getEntryFromTranspositionTable();
             return new Move(entry.getStartRow(), entry.getStartCol(), entry.getEndRow(), entry.getEndCol(), entry.isAttack(), entry.getEvaluation());
         }
@@ -83,6 +83,8 @@ public class NegaMaxBotTT extends Bot {
         int maxEval = Integer.MIN_VALUE;
 
         for (Move move : moves) {
+            if(suicideMove(board,move.endRow,move.endCol, max)) // suicide moves
+                continue;
             botLogic.makeMove(board, move, isBlack && max == 1 || !isBlack && max == -1); // if true move is black, else white
             if(move.isAttackMove)
                 zobristTransposition.updateZobristHashForAttack(move.startRow, move.startCol, move.endRow, move.endCol,board[move.endRow][move.endCol]);
@@ -116,6 +118,16 @@ public class NegaMaxBotTT extends Bot {
         }
 
         return bestMove;
+    }
+    public boolean suicideMove(int [][]board, int row, int col, int max){
+        if(row!=0 && row!=board.length-1 && col!=0 && col!=board.length-1)
+            if((max==1 && isBlack) || (max==-1 && !isBlack)) // Bot black plays
+                if((board[row-1][col-1] == 1 && board[row+1][col+1] == 0) || (board[row-1][col+1] == 1 && board[row+1][col-1] == 0))
+                    return true;
+                else if((max==1 && !isBlack) || (max==-1 && isBlack)) // Bot white plays
+                    if((board[row+1][col-1] == 2 && board[row-1][col+1] == 0) || (board[row+1][col+1] == 2 && board[row-1][col-1] == 0))
+                        return true;
+        return false;
     }
     public void saveTranspositionTable(String filename) {
         zobristTransposition.saveTranspositionTable(filename);

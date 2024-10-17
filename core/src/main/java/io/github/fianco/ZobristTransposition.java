@@ -7,18 +7,19 @@ import java.util.Random;
 
 public class ZobristTransposition implements Serializable {
 
-    private static final int MAX_ENTRIES = 500000; // number of elements * size of each element => 243 * 4 bytes = 972 bytes
-    // 1gm ram / 972 bytes = ~1,1 millions
-    private int[][][] zobristTable; // Zobrist hashing table
+    private static final int MAX_ENTRIES = 500000; // number of elements * size of each element => 243 * 8 bytes = 1944 bytes
+    // 1gm ram / 1944 bytes = ~0,56 millions
+    private long[][][] zobristTable; // Zobrist hashing table
     private long zobristHash; // Current hash for the board
     private Map<Long, TranspositionEntry> transpositionTable; // Transposition table with Zobrist hash as key
 
     private static final int BLACK_PIECE = 2;
     private static final int WHITE_PIECE = 1;
     private static final int EMPTY = 0;
+    private long playerHash;
 
     public ZobristTransposition() {
-        this.zobristTable = new int[9][9][3]; // 9x9 board, 3 states (empty, white, black)
+        this.zobristTable = new long[9][9][3]; // 9x9 board, 3 states (empty, white, black)
         this.transpositionTable = new HashMap<>();
         initializeZobristTable();
     }
@@ -26,11 +27,11 @@ public class ZobristTransposition implements Serializable {
     // Method to initialize the Zobrist table with random values
     private void initializeZobristTable() {
         Random random = new Random();
+        playerHash = random.nextLong();
         for (int row = 0; row < 9; row++) {
             for (int col = 0; col < 9; col++) {
-                zobristTable[row][col][EMPTY] = random.nextInt();
-                zobristTable[row][col][WHITE_PIECE] = random.nextInt();
-                zobristTable[row][col][BLACK_PIECE] = random.nextInt();
+                zobristTable[row][col][WHITE_PIECE] = random.nextLong();
+                zobristTable[row][col][BLACK_PIECE] = random.nextLong();
             }
         }
     }
@@ -38,14 +39,21 @@ public class ZobristTransposition implements Serializable {
     private void ensureCapacity() {
         if (transpositionTable.size() > MAX_ENTRIES) {
             Long keyToRemove = null;
-            int minDepth = Integer.MAX_VALUE; // Initialize with the maximum possible integer value
+            int minDepth = 50; // Initialize with the maximum possible integer value
+            int value;
+            int count = 0;
 
             // Iterate through the transposition table to find the entry with the lowest depth
             for (Map.Entry<Long, TranspositionEntry> entry : transpositionTable.entrySet()) {
                 TranspositionEntry transpositionEntry = entry.getValue();
-                if (transpositionEntry.getDepth() < minDepth) {
-                    minDepth = transpositionEntry.getDepth();
+                value = transpositionEntry.getDepth();
+                count++;
+                if (value < minDepth) {
+                    minDepth = value;
                     keyToRemove = entry.getKey(); // Store the key of the entry with the lowest depth
+                }
+                if(count>=10){
+                    break;
                 }
             }
 
@@ -68,6 +76,7 @@ public class ZobristTransposition implements Serializable {
                 }
             }
         }
+
         this.zobristHash = hash;
         return hash;
     }
@@ -76,22 +85,13 @@ public class ZobristTransposition implements Serializable {
     public void updateZobristHash(int startRow, int startCol, int endRow, int endCol, int piece) {
         // XOR out the old piece at the start position
         zobristHash ^= zobristTable[startRow][startCol][piece];
-        // XOR in the empty square at the start position
-        zobristHash ^= zobristTable[startRow][startCol][EMPTY];
-
-        // XOR out the piece at the end position (should be empty)
-        zobristHash ^= zobristTable[endRow][endCol][EMPTY];
         // XOR in the new piece at the end position
         zobristHash ^= zobristTable[endRow][endCol][piece];
+        zobristHash ^= playerHash; // switch who is playing
     }
     public void updateZobristHashForAttack(int startRow, int startCol, int endRow, int endCol, int attackingPiece) {
         // Regular move: XOR out the attacking piece from its start position
         zobristHash ^= zobristTable[startRow][startCol][attackingPiece];
-        // XOR in the empty space at the start position
-        zobristHash ^= zobristTable[startRow][startCol][EMPTY];
-
-        // Regular move: XOR out the empty square from the end position
-        zobristHash ^= zobristTable[endRow][endCol][EMPTY];
         // XOR in the attacking piece at the end position
         zobristHash ^= zobristTable[endRow][endCol][attackingPiece];
 
@@ -100,9 +100,9 @@ public class ZobristTransposition implements Serializable {
         int capturedCol = (startCol + endCol) / 2;
 
         zobristHash ^= zobristTable[capturedRow][capturedCol][attackingPiece==WHITE_PIECE?2:1];
-        // XOR in an empty square where the captured piece was
-        zobristHash ^= zobristTable[capturedRow][capturedCol][EMPTY];
+        zobristHash ^= playerHash; // switch who is playing
     }
+
     // Get the current Zobrist hash
     public long getZobristHash() {
         return zobristHash;
@@ -121,7 +121,7 @@ public class ZobristTransposition implements Serializable {
     // Store the evaluation and move in the transposition table
     public void storeEntryInTranspositionTable(int evaluation, boolean isAttack, int startRow, int startCol, int endRow, int endCol, int depth, int flag) {
         TranspositionEntry entry = new TranspositionEntry(evaluation, isAttack, startRow, startCol, endRow, endCol, depth, flag);
-        ensureCapacity(); // Ensure we don't exceed 20 million entries
+        ensureCapacity(); // Ensure we don't exceed the limit
         //System.out.println(transpositionTable.size());
         transpositionTable.put(zobristHash, entry);
     }
@@ -141,7 +141,6 @@ public class ZobristTransposition implements Serializable {
 
         // Clear the transposition table
         transpositionTable.clear();
-        System.out.println("Transposition table has been reset.");
     }
 
     // Save the transposition table to a file
