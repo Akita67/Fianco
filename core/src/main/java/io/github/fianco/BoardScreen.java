@@ -163,6 +163,7 @@ public class BoardScreen extends InputAdapter implements Screen {
             board[8][col] = 2; // 2 = black stone
         }
         board[7][1]=2;board[7][7]=2;board[6][2]=2;board[6][6]=2;board[5][3]=2;board[5][5]=2;
+
     }
     @Override
     public void show() {
@@ -183,7 +184,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 3:{
-                    bot1 = new MTCS(false,board,100000,8);
+                    bot1 = new MTCS(false,board,160000,8);
                     break;
                 }
                 case 4:{
@@ -203,7 +204,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 8:{
-                    bot1 = new CompetitionBot(false,board,20, 500);
+                    bot1 = new CompetitionBot(false,board,12, 400);
                     break;
                 }
             }
@@ -224,7 +225,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 3:{
-                    bot2 = new MTCS(true,board,100000,8);
+                    bot2 = new MTCS(true,board,160000,8);
                     break;
                 }
                 case 4:{
@@ -244,7 +245,7 @@ public class BoardScreen extends InputAdapter implements Screen {
                     break;
                 }
                 case 8:{
-                    bot2 = new CompetitionBot(true,board,10, 500);
+                    bot2 = new CompetitionBot(true,board,12, 500);
                     break;
                 }
             }

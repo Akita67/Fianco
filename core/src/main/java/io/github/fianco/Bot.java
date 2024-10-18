@@ -15,7 +15,6 @@ public abstract class Bot {
         this.board = board;
     }
 
-
     /**
      * @param boardScreen
      * This is the general method for performing a move for a bot.

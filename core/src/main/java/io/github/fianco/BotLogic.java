@@ -20,9 +20,9 @@ public class BotLogic {
         final int distanceWeight = 1;
         final int pieceValue = 10;
         final int columnWeight = 1;
-        final int dangerPenalty = 10; // Penalty for pieces in danger of being captured
-        final int captureBonus = 10; // Bonus for opponent pieces that can be captured
-        final int freedom_moves = 5;
+        final int dangerPenalty = 5; // Penalty for pieces in danger of being captured
+        final int captureBonus = 5; // Bonus for opponent pieces that can be captured
+        final int freedom_moves = 3;
         int freedom_of_movements = 0;
 
         for (int row = 0; row < board.length; row++) {
@@ -46,7 +46,7 @@ public class BotLogic {
                         score += pieceValue + distanceWeight * row;
                     }
                     if(col%8 == 0){
-                        score+=columnWeight*2;
+                        score+=columnWeight;
                     }else if(col == 3 || col == 4 || col == 5){
                         score+=columnWeight;
                     }
@@ -74,7 +74,7 @@ public class BotLogic {
                         score -= (pieceValue + distanceWeight * row);
                     }
                     if(col%8 == 0){
-                        score-=columnWeight*2;
+                        score-=columnWeight;
                     }else if(col == 3 || col == 4 || col == 5){
                         score-=columnWeight;
                     }
@@ -105,15 +105,15 @@ public class BotLogic {
             for (int col = 0; col < board[row].length; col++) {
                 if (isBotPiece(row, col, board)) {
                     if(isBlack)
-                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row); // Example add: + (7 - row);
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (int)((7 - row)/2); // Example add: + (7 - row);
                     else
-                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row;
+                        score += PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (int)(row/2);
 
                 } else if (isOpponentPiece(row, col, board)) {
                     if(!isBlack)
-                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (7 - row)); // Example add: + row;
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (int)((7 - row)/2)); // Example add: + row;
                     else
-                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * row);
+                        score -= (PIECE_COUNT_WEIGHT + DISTANCE_WEIGHT * (int)(row/2));
                 }
             }
         }

@@ -113,7 +113,6 @@ public class MTCS extends Bot {
         boolean currentPlayerIsBot = node.isBlackNode;
         blackWins = false;
         whiteWins = false;
-
         while (!isGameOver(simulationBoard)) {
             List<Move> possibleMoves = getAllPossibleMoves(boardScreen, simulationBoard, currentPlayerIsBot);
             if (possibleMoves.isEmpty()) {
